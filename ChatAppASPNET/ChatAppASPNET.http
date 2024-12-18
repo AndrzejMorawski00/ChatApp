@@ -1,0 +1,6 @@
+@ChatAppASPNET_HostAddress = http://localhost:5132
+
+GET {{ChatAppASPNET_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

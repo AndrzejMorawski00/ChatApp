@@ -1,0 +1,66 @@
+use ChatApp;
+
+CREATE TABLE UserData (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Email NVARCHAR(200) NOT NULL
+);
+
+CREATE TABLE Password (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    PasswordHash NVARCHAR(MAX) NOT NULL,
+    Salt NVARCHAR(MAX) NOT NULL,
+    HashingRounds INT NOT NULL,
+    PasswordSetDate DATETIME NOT NULL
+);
+
+CREATE TABLE UserAdditionalData (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    UserId INT NOT NULL,
+    ProfileImage NVARCHAR(MAX),
+	FirstName NVARCHAR(200) NOT NULL,
+    LastName NVARCHAR(200) NOT NULL,
+    FOREIGN KEY (UserId) REFERENCES UserData(Id)
+);
+
+
+CREATE TABLE FriendList (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    UserId INT NOT NULL,
+    FriendId INT NOT NULL,
+    FriendshipStatus NVARCHAR(50) NOT NULL,
+    CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY (UserId) REFERENCES UserData(Id),
+    FOREIGN KEY (FriendId) REFERENCES UserData(Id)
+);
+
+
+
+CREATE TABLE ChatParticipants (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    ChatId INT NOT NULL,
+    UserId INT NOT NULL,
+    AddedAt DATETIME NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY (ChatId) REFERENCES Chats(Id),
+    FOREIGN KEY (UserId) REFERENCES UserData(Id)
+);
+
+CREATE TABLE Messages (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    ChatId INT NOT NULL,
+    SenderId INT NOT NULL,
+    Content NVARCHAR(MAX) NOT NULL,
+    SentAt DATETIME NOT NULL DEFAULT GETDATE(),
+    IsEdited BIT NOT NULL DEFAULT 0, 
+    FOREIGN KEY (ChatId) REFERENCES Chats(Id),
+    FOREIGN KEY (SenderId) REFERENCES UserData(Id)
+);
+
+CREATE TABLE GroupMetadata (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    ChatId INT NOT NULL, 
+    GroupName NVARCHAR(200) NOT NULL,
+    GroupDescription NVARCHAR(MAX),
+    GroupImage NVARCHAR(MAX), 
+    CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY (ChatId) REFERENCES Chats(Id)
+);
