@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { isValidKeyValue } from "../../utils/common";
-import { isValidLoginForm } from "../../utils/Auth/isValidAuthForm";
+import { isValidLoginForm } from "../../utils/auth/isValidAuthForm";
 import { Link } from "react-router";
 import { LoginFormType } from "../../types/auth";
 import useLoginUser from "../../api/auth/useLoginUser";
@@ -38,7 +38,7 @@ const Register = () => {
     return (
         <div>
             <header>
-                <Link to="/register/" />
+                <Link to="/register/">Register</Link>
             </header>
             <form action="" onSubmit={handleFormSubmit}>
                 <div>

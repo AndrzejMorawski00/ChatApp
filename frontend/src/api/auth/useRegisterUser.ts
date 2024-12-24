@@ -18,8 +18,8 @@ const useRegisterUser = (): useRegisterUserType => {
                 navigate("/login/");
             }
         } catch (err: any) {
-            setError("Failed to create ann account");
-            console.error("Login Error", err);
+            setError("Failed to create an account");
+            console.error(`Login failed. ${err}`);
         } finally {
             setLoading(false);
         }

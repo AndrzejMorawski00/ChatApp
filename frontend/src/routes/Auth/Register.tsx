@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { RegisterFormType } from "../../types/auth";
 import { isValidKeyValue } from "../../utils/common";
-import { isValidRegisterForm } from "../../utils/Auth/isValidAuthForm";
+import { isValidRegisterForm } from "../../utils/auth/isValidAuthForm";
 import { Link } from "react-router";
 import useRegisterUser from "../../api/auth/useRegisterUser";
 
@@ -15,7 +15,7 @@ const INITIAL_REGISTER_FORM: RegisterFormType = {
 
 const Register = () => {
     const [formData, setFormData] = useState<RegisterFormType>(INITIAL_REGISTER_FORM);
-    const { register, loading, error } = useRegisterUser();
+    const { registerUser, loading, error } = useRegisterUser();
 
     const handleFormDataChange = <T extends keyof RegisterFormType>(key: string, value: RegisterFormType[T]): void => {
         if (isValidKeyValue(key, formData)) {
@@ -33,14 +33,14 @@ const Register = () => {
         if (!isValidRegisterForm(formData)) {
             return;
         }
-        await register(formData);
+        await registerUser(formData);
         setFormData(INITIAL_REGISTER_FORM);
     };
 
     return (
         <div>
             <header>
-                <Link to="/login/" />
+                <Link to="/login/">Login</Link>
             </header>
             <form action="" onSubmit={handleFormSubmit}>
                 <div>

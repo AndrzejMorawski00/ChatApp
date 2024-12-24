@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import axiosInstance from "../../utils/api/apiConfig";
+import { AxiosResponse } from "axios";
 
 interface Props {
     queryKeys: string[];
@@ -14,13 +15,13 @@ const useGetRequest = <T>({ queryKeys, endpoint, keepData }: Props) => {
         queryFn: async (): Promise<T> => {
             try {
                 const response = await axiosInstance.get<T>(endpoint);
+                console.log('Fetched data');
                 return response.data;
             } catch (error: any) {
                 throw new Error(`${error.response?.status ? `Response status: ${error.response.status}` : ""}`);
             }
         },
         placeholderData: keepData ? keepPreviousData : undefined,
-        refetchInterval: 1000,
     });
 };
 

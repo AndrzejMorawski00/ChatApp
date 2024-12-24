@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
 import { Navigate } from "react-router";
-import { logout } from "../../redux/auth/isAuthenticatedSlice";
+import { logout } from "../../redux/auth/authSlice";
 import { useEffect } from "react";
 
 const Logout = () => {

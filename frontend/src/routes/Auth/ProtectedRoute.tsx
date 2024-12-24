@@ -1,15 +1,11 @@
-import { ReactNode } from "react";
+
 import { useSelector } from "react-redux";
-import { RootState } from "../../redux/store";
-import { Navigate} from "react-router";
+import { Navigate, Outlet} from "react-router";
+import { StoreState } from "../../redux/store";
 
-interface Props {
-    children: ReactNode;
-}
-
-const ProtectedRoute = ({ children }: Props) => {
-    const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-    return isAuthenticated? children : <Navigate to='/' />
+const ProtectedRoute = () => {
+    const isAuthenticated = useSelector((state: StoreState) => state.auth.isAuthenticated);
+    return isAuthenticated? <Outlet/> : <Navigate to='/login/' />
 };
 
 export default ProtectedRoute;

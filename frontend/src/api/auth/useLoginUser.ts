@@ -8,7 +8,6 @@ const useLoginUser = (): useLoginUserType => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
-
     const loginUser = async ({ email, password }: LoginFormType): Promise<void> => {
         setLoading(true);
         setError(null);
@@ -22,9 +21,9 @@ const useLoginUser = (): useLoginUserType => {
             localStorage.setItem(ACCESS_TOKEN, accessToken);
             localStorage.setItem(REFRESH_TOKEN, refreshToken);
             navigate("/home/");
-        } catch (err: any) {
+        } catch (err) {
             setError("Login Failed");
-            console.error("Login Error", err);
+            console.error(`Login failed. ${err}`);
         } finally {
             setLoading(false);
         }

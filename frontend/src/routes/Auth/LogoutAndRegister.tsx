@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
 import Register from "./Register";
-import { logout } from "../../redux/auth/isAuthenticatedSlice";
+import { logout } from "../../redux/auth/authSlice";
 
 const LogoutAndRegister = () => {
     const dispatch = useDispatch();

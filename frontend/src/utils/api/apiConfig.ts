@@ -1,19 +1,13 @@
 import axios from "axios";
 import { ACCESS_TOKEN } from "../../constants/auth";
-import { logout } from "../../redux/auth/isAuthenticatedSlice";
-import { EnhancedStore } from "@reduxjs/toolkit/react";
-
-import { refreshToken } from "./refreshToken";
-
-let store: EnhancedStore;
-
-export const injectDispatch = (_store: any) => {
-    store = _store;
-};
+import { store } from "../../redux/store";
+import { logout } from "../../redux/auth/authSlice";
+import { refreshToken } from "../auth/refreshToken";
 
 export const getBaseAPIUrl = (): string => {
     const isDevelopment = import.meta.env.MODE === "development";
     if (isDevelopment) {
+        console.log(import.meta.env.VITE_API_BASE_URL_LOCAL);
         return import.meta.env.VITE_API_BASE_URL_LOCAL;
     }
     return import.meta.env.VITE_API_BASE_URL_PROD;
@@ -46,9 +40,13 @@ axiosInstance.interceptors.response.use(
     async (error) => {
         const originalResponse = error.config;
 
-        if (error.response.status === 401) {
-            const refreshTokenresult = await refreshToken();
-            if (refreshTokenresult) {
+        if (error.response?.status === 401) {
+            const refreshSuccess = await refreshToken();
+            if (refreshSuccess) {
+                const token = localStorage.getItem(ACCESS_TOKEN);
+                if (token) {
+                    originalResponse.headers.Authorization = `Bearer ${token}`;
+                }
                 return axiosInstance(originalResponse);
             }
         }
@@ -57,5 +55,4 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
 export default axiosInstance;

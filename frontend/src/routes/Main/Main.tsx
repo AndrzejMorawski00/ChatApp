@@ -1,50 +1,27 @@
-import { Outlet, useLocation, useNavigate } from "react-router";
-import { ACCESS_TOKEN } from "../../constants/auth";
-import { useEffect } from "react";
-import { isValidJwtToken } from "../../utils/Auth/isValidJwtToken";
-import { useDispatch, useSelector } from "react-redux";
-import { logout, setIsAuthenticated } from "../../redux/auth/isAuthenticatedSlice";
-import Header from "../../components/Header/Header";
+import {Outlet } from "react-router";
+import { useSelector } from "react-redux";
 import MainLink from "../../components/Main/MainLink";
-import { RootState } from "../../redux/store";
-import { refreshToken } from "../../utils/api/refreshToken";
+import useAuth from "../../api/auth/useAuth";
+import { StoreState } from "../../redux/store";
 
 const Main = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        const auth = async () => {
-            const token = localStorage.getItem(ACCESS_TOKEN);
-            if (token && isValidJwtToken(token)) {
-                dispatch(setIsAuthenticated({ isAuthenticated: true }));
-                {
-                    location.pathname != "/" ? navigate(location.pathname) : navigate("/home/");
-                }
-                return;
-            } else if (isAuthenticated) {
-                const refreshTokenResult = await refreshToken();
-                if (!refreshTokenResult) {
-                    dispatch(logout());
-                }
-            }
-            navigate("/");
-        };
-
-        auth();
-    }, [dispatch, isAuthenticated, location.pathname, navigate]);
+    useAuth();
+    const isAuthenticated = useSelector((store: StoreState) => store.auth.isAuthenticated);
 
     return (
-        <div>
-            <Header />
+        <div className="flex flex-col h-screen w-screen">
+            <header className="flex justify-end">
+                <h1>Chat App</h1>
+                {isAuthenticated && (
+                    <MainLink destination='/logout/' buttonText="Logout" />
+                )}
+            </header>
             {isAuthenticated ? (
                 <Outlet />
             ) : (
-                <div>
-                    <MainLink linkPath="/login/" buttonText="Login" />
-                    <MainLink linkPath="register" buttonText="Register" />
+                <div className="flex flex-col gap-10 w-full h-full items-center justify-center">
+                    <MainLink destination="login/" buttonText="Login"/>
+                    <MainLink destination="register/" buttonText="Register"/>
                 </div>
             )}
         </div>
