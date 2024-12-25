@@ -1,66 +1,66 @@
 use ChatApp;
 
-CREATE TABLE UserData (
+CREATE TABLE UserModel (
     Id INT PRIMARY KEY IDENTITY(1,1),
-    Email NVARCHAR(200) NOT NULL
+    Email VARCHAR(255) NOT NULL UNIQUE
 );
+
+
+CREATE TABLE UserData (
+    Id INT PRIMARY KEY,
+    FirstName VARCHAR(1024) NOT NULL,
+    LastName VARCHAR(1024) NOT NULL,
+    CONSTRAINT FK_UserData_User FOREIGN KEY (Id) REFERENCES UserModel(Id)
+);
+
 
 CREATE TABLE Password (
-    Id INT PRIMARY KEY IDENTITY(1,1),
-    PasswordHash NVARCHAR(MAX) NOT NULL,
-    Salt NVARCHAR(MAX) NOT NULL,
-    HashingRounds INT NOT NULL,
-    PasswordSetDate DATETIME NOT NULL
-);
-
-CREATE TABLE UserAdditionalData (
-    Id INT PRIMARY KEY IDENTITY(1,1),
-    UserId INT NOT NULL,
-    ProfileImage NVARCHAR(MAX),
-	FirstName NVARCHAR(200) NOT NULL,
-    LastName NVARCHAR(200) NOT NULL,
-    FOREIGN KEY (UserId) REFERENCES UserData(Id)
+    userId INT PRIMARY KEY,
+    PasswordHash VARCHAR(1024) NOT NULL,
+    Salt VARCHAR(1024) NOT NULL,
+    HashingRounds INT NOT NULL DEFAULT 12,
+    PasswordSetDate DATETIME NOT NULL,
+    CONSTRAINT FK_Password_User FOREIGN KEY (userId) REFERENCES UserModel(Id)
 );
 
 
-CREATE TABLE FriendList (
+CREATE TABLE Friend (
     Id INT PRIMARY KEY IDENTITY(1,1),
     UserId INT NOT NULL,
     FriendId INT NOT NULL,
-    FriendshipStatus NVARCHAR(50) NOT NULL,
-    CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
-    FOREIGN KEY (UserId) REFERENCES UserData(Id),
-    FOREIGN KEY (FriendId) REFERENCES UserData(Id)
+    Status VARCHAR(1024) NOT NULL DEFAULT 'pending',
+    CONSTRAINT FK_Friend_User FOREIGN KEY (UserId) REFERENCES UserModel(Id),
+    CONSTRAINT FK_Friend_FriendUser FOREIGN KEY (FriendId) REFERENCES UserModel(Id)
+);
+
+CREATE TABLE Chat (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    ChatType VARCHAR(1024) NOT NULL DEFAULT 'private',
+    ChatName VARCHAR(1024) NOT NULL
 );
 
 
-
-CREATE TABLE ChatParticipants (
+CREATE TABLE ChatParticipant (
     Id INT PRIMARY KEY IDENTITY(1,1),
     ChatId INT NOT NULL,
     UserId INT NOT NULL,
-    AddedAt DATETIME NOT NULL DEFAULT GETDATE(),
-    FOREIGN KEY (ChatId) REFERENCES Chats(Id),
-    FOREIGN KEY (UserId) REFERENCES UserData(Id)
+    CONSTRAINT FK_ChatParticipant_Chat FOREIGN KEY (ChatId) REFERENCES Chat(Id),
+    CONSTRAINT FK_ChatParticipant_User FOREIGN KEY (UserId) REFERENCES UserModel(Id)
 );
 
-CREATE TABLE Messages (
+CREATE TABLE Message (
     Id INT PRIMARY KEY IDENTITY(1,1),
     ChatId INT NOT NULL,
     SenderId INT NOT NULL,
-    Content NVARCHAR(MAX) NOT NULL,
-    SentAt DATETIME NOT NULL DEFAULT GETDATE(),
-    IsEdited BIT NOT NULL DEFAULT 0, 
-    FOREIGN KEY (ChatId) REFERENCES Chats(Id),
-    FOREIGN KEY (SenderId) REFERENCES UserData(Id)
+    SentTime DATETIME NOT NULL,
+    Content VARCHAR(1024) NOT NULL,
+    CONSTRAINT FK_Message_Chat FOREIGN KEY (ChatId) REFERENCES Chat(Id),
+    CONSTRAINT FK_Message_Sender FOREIGN KEY (SenderId) REFERENCES UserModel(Id)
 );
 
-CREATE TABLE GroupMetadata (
-    Id INT PRIMARY KEY IDENTITY(1,1),
-    ChatId INT NOT NULL, 
-    GroupName NVARCHAR(200) NOT NULL,
-    GroupDescription NVARCHAR(MAX),
-    GroupImage NVARCHAR(MAX), 
-    CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
-    FOREIGN KEY (ChatId) REFERENCES Chats(Id)
-);
+
+
+
+
+
+

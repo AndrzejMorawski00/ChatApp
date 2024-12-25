@@ -23,15 +23,10 @@ namespace ChatAppASPNET
             var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256Signature);
 
             var claims = new[] {
-                new Claim(ClaimTypes.Name, user.Email),
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim("userId", user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email.ToString()),
             };
 
             var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(expiresInMinutes),
                 signingCredentials: signingCredentials

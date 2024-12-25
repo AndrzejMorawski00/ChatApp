@@ -1,4 +1,5 @@
-﻿using ChatAppASPNET.DBContext.Entities;
+﻿using ChatAppASPNET.DBContext;
+using ChatAppASPNET.DBContext.Entities;
 using ChatAppASPNET.Models.API;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using static ChatAppASPNET.DBContext.DBContext;
+
 
 namespace ChatAppASPNET.Controllers.API
 {
@@ -49,17 +50,13 @@ namespace ChatAppASPNET.Controllers.API
             var hashedPassowrd = PasswordHasher.HashPassword(model.Password, salt, hashingRounds);
             var user = new UserData
             {
+                FirstName = model.FirstName,
+                LastName = model.LastName,
                 Email = model.Email,
             };
 
             var userId = await _dbContext.UserData.AddAsync(user);
-
-            var userProfile = new UserProfile
-            {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                UserData = user,
-            };
+            await _dbContext.SaveChangesAsync();
 
             if (userId == null)
             {
@@ -68,15 +65,13 @@ namespace ChatAppASPNET.Controllers.API
 
             var password = new Password
             {
+                UserID = user.ID,
                 PasswordHash = hashedPassowrd,
                 Salt = salt,
-                HashingRounds = hashingRounds,
-                Id = user.Id,
                 PasswordSetDate = DateTime.UtcNow,
             };
 
             await _dbContext.Passwords.AddAsync(password);
-            await _dbContext.Profiles.AddAsync(userProfile);    
             await _dbContext.SaveChangesAsync();
             return Ok("Registration successful.");
         }
@@ -93,7 +88,7 @@ namespace ChatAppASPNET.Controllers.API
             var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == model.Email);
             if (user == null) return Unauthorized("Invalid credentials");
 
-            var password = await _dbContext.Passwords.FirstOrDefaultAsync(p => p.Id == user.Id);
+            var password = await _dbContext.Passwords.FirstOrDefaultAsync(p => p.UserID == user.ID);
             if (password == null) return Unauthorized("Invalid credentials");
 
             bool isValidPassword = PasswordHasher.VerifyPassword(model.Password, password.Salt, password.PasswordHash);
@@ -103,8 +98,8 @@ namespace ChatAppASPNET.Controllers.API
                 return Unauthorized("Invalid credentials");
             }
 
-            var accessToken = _jwtHandler.GenerateJwtToken(user, expiresInMinutes: 1);
-            var refreshToken = _jwtHandler.GenerateJwtToken(user, expiresInMinutes: 5);
+            var accessToken = _jwtHandler.GenerateJwtToken(user, expiresInMinutes: 120);
+            var refreshToken = _jwtHandler.GenerateJwtToken(user, expiresInMinutes: 1440);
 
             return Ok(new { AccessToken = accessToken, RefreshToken = refreshToken });
 
@@ -125,19 +120,19 @@ namespace ChatAppASPNET.Controllers.API
                 return Unauthorized("Invalid refresh token.");
             }
 
-            var email = principal.FindFirstValue(ClaimTypes.Name);
-            if (email == null)
+            var userEmail = principal.FindFirstValue(ClaimTypes.Email);
+            if (userEmail == null)
             {
                 return Unauthorized("Invalid refresh token.");
             }
 
-            var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == userEmail);
             if (user == null)
             {
                 return Unauthorized("User not found.");
             }
 
-            var newAccessToken = _jwtHandler.GenerateJwtToken(user, expiresInMinutes: 1);
+            var newAccessToken = _jwtHandler.GenerateJwtToken(user, expiresInMinutes: 120);
 
 
             return Ok(new { AccessToken = newAccessToken });

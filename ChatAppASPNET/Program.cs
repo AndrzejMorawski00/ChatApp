@@ -5,9 +5,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using static ChatAppASPNET.DBContext.DBContext;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using ChatAppASPNET.DBContext;
+using ChatAppASPNET.Hubs;
+
+
 
 namespace ChatAppASPNET
 {
@@ -20,6 +23,7 @@ namespace ChatAppASPNET
             builder.Configuration.AddJsonFile("appsettings.json");
 
             // Add services to the container.
+            builder.Services.AddSignalR();
             builder.Services.AddControllers();
             builder.Services.AddControllersWithViews();
             builder.Services.AddEndpointsApiExplorer();
@@ -29,15 +33,18 @@ namespace ChatAppASPNET
             builder.Services.AddSingleton<JwtHandler>();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddSignalR();
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins("http://localhost:5173")
                           .AllowAnyMethod()
-                          .AllowAnyHeader();
+                          .AllowAnyHeader()
+                          .AllowCredentials();
                 });
             });
+
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(cfg =>
@@ -64,6 +71,23 @@ namespace ChatAppASPNET
                             Console.WriteLine(ex.Message);
                         }
                     };
+
+                    cfg.Events = new JwtBearerEvents()
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+
+                            var path = context.HttpContext.Request.Path;
+                            if (!string.IsNullOrEmpty(accessToken) &&
+                                (path.StartsWithSegments("/chatHub")))
+                            {
+                                context.Token = accessToken;
+                            }
+                            return Task.CompletedTask;
+
+                        }
+                    };
                 });
 
 
@@ -75,11 +99,12 @@ namespace ChatAppASPNET
                 app.UseSwaggerUI();
             }
 
-            app.UseCors("AllowFrontend");
             app.UseDeveloperExceptionPage();
+            app.UseCors("AllowFrontend");
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.MapHub<ChatHub>("/chatHub");
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
@@ -87,5 +112,6 @@ namespace ChatAppASPNET
             app.Run();
 
         }
+
     }
 }

@@ -5,63 +5,62 @@ using System;
 
 namespace ChatAppASPNET.DBContext
 {
-    public class DBContext
+
+    public class AppDBContext : DbContext
     {
-        public class AppDBContext : DbContext
+        public DbSet<UserData> UserData { get; set; }
+        public DbSet<Password> Passwords { get; set; }
+        public DbSet<Friend> Friends { get; set; }
+        public DbSet<Chat> Chats { get; set; }
+        public DbSet<ChatParticipant> ChatParticipants { get; set; }
+
+        public DbSet<SimpleMessage> SimpleMessages { get; set; }
+
+
+
+        public AppDBContext(DbContextOptions<AppDBContext> options) : base(options) { }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            public DbSet<UserData> UserData { get; set; }
-            public DbSet<Password> Passwords { get; set; }
+            modelBuilder.Entity<UserData>().ToTable("UserData");
+            modelBuilder.Entity<Password>().ToTable("Passwords");
+            modelBuilder.Entity<Friend>().ToTable("Friends");
+            modelBuilder.Entity<Chat>().ToTable("Chats");
+            modelBuilder.Entity<ChatParticipant>().ToTable("ChatParcitipants");
+            modelBuilder.Entity<SimpleMessage>().ToTable("SimpleMessages");
 
-            public DbSet<UserProfile> Profiles { get; set; }
+            modelBuilder.Entity<Friend>()
+                .HasOne(f => f.User)
+                .WithMany(u => u.Friends)
+                .HasForeignKey(f => f.SenderID)
+                .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Password>()
+                .HasOne(p => p.User)
+                .WithOne(u => u.Password)
+                .HasForeignKey<Password>(p => p.UserID);
 
-            public AppDBContext(DbContextOptions<AppDBContext> options) : base(options) { }
+            modelBuilder.Entity<Friend>()
+                .HasOne(f => f.FriendUser)
+                .WithMany()
+                .HasForeignKey(f => f.ReceiverID)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            protected override void OnModelCreating(ModelBuilder modelBuilder)
-            {
-                modelBuilder.Entity<UserData>(entity =>
-                {
-                    entity.ToTable("UserData");
-                    entity.HasKey(u => u.Id);
-                    entity.Property(u => u.Email).IsRequired().HasMaxLength(200);
-                });
+            modelBuilder.Entity<ChatParticipant>()
+                .HasOne(cp => cp.Chat)
+                .WithMany(c => c.Participants)
+                .HasForeignKey(cp => cp.ChatID);
 
-
-                modelBuilder.Entity<Password>(entity =>
-                {
-                    entity.ToTable("Password");
-                    entity.HasKey(p => p.Id);
-                    entity.Property(p => p.PasswordHash).IsRequired();
-                    entity.Property(p => p.Salt).IsRequired();
-                    entity.Property(p => p.HashingRounds).HasDefaultValue(12);
-                    entity.Property(p => p.PasswordSetDate).IsRequired();
-                });
-
-                modelBuilder.Entity<UserProfile>(entity =>
-                {
-                    entity.ToTable("UserAdditionalData");
-
-                    entity.HasKey(up => up.Id);
-
-                    entity.Property(up => up.ProfileImage)
-                          .HasColumnType("NVARCHAR(MAX)");
-
-                    entity.Property(up => up.FirstName)
-                          .IsRequired()
-                          .HasMaxLength(200);
-
-                    entity.Property(up => up.LastName)
-                          .IsRequired()
-                          .HasMaxLength(200);
-
-                    entity.HasOne(up => up.UserData)
-                          .WithMany()
-                          .HasForeignKey(up => up.UserId)
-                          .IsRequired();
-                });
-
-            }
-
+            modelBuilder.Entity<ChatParticipant>()
+                .HasOne(cp => cp.User)
+                .WithMany(u => u.Participants)
+                .HasForeignKey(cp => cp.UserID);
         }
+
     }
+
 }
+
+
+
+
