@@ -1,42 +1,43 @@
-import { useSelector } from "react-redux"
-import useGetRequest from "../../api/useGetRequest/useGetRequest"
-import { StoreState } from "../../redux/store"
-import { useEffect, useState } from "react"
-import FriendItem from "./UserItem"
-import { UserData } from "../../types/Users"
+// import { useSelector } from "react-redux";
+// import useGetRequest from "../../api/useGetRequest/useGetRequest";
+// import { StoreState } from "../../redux/store";
+// import { useEffect, useState } from "react";
+import { HandleAddFriend } from "../../types/Friends";
+import { UserData } from "../../types/Users";
+import UserItem from "./UserItem";
 
-const FriendList = () => {
-    const {searchBarValue} = useSelector((store : StoreState) => store.friendsSearch)
-    const [debouncesSearchValue, setDebouncedSearchValue] = useState(searchBarValue)
+interface Props {
+    users: UserData[];
+    isLoading: boolean;
+    isError: boolean;
+    handleAddFriend : HandleAddFriend
+}
 
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedSearchValue(searchBarValue);
-        }, 300); 
-
-        return () => clearTimeout(handler); 
-    }, [searchBarValue]);
-
-
-    const {data, isLoading, isError} = useGetRequest<UserData[]>({queryKeys: ['users', 'potentialFirends', debouncesSearchValue], endpoint: `/api/UserData/GetAll?searchParameter=${debouncesSearchValue}`, keepData: true})
-
-
-
-
+const UserList = ({ users, isLoading, isError, handleAddFriend }: Props) => {
     if (isLoading) {
-        return <div>
-            <p>Loading...</p>
-        </div>
+        return (
+            <div>
+                <p>Loading...</p>
+            </div>
+        );
     }
 
     if (isError) {
-        return <div>
-            <p>Error</p>
-        </div>
+        return (
+            <div>
+                <p>Error</p>
+            </div>
+        );
     }
 
-    const users  = data ? data : []
-    return <ul>{users.map((friend, idx) => <FriendItem key={idx} friend={friend}/>)}</ul>
-}
+    return (
+        <ul>
+            {users.map((user, idx) => (
+                <UserItem key={idx} user={user} handleAddFriend={handleAddFriend}/>
+            ))}
+        </ul>
+    );
+    return <ul></ul>;
+};
 
-export default FriendList
+export default UserList;

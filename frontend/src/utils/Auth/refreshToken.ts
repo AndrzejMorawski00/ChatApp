@@ -3,6 +3,7 @@ import axiosInstance from "../api/apiConfig";
 
 export const refreshToken = async (): Promise<boolean> => {
     const token = localStorage.getItem(REFRESH_TOKEN);
+    console.log('xD');
     if (token) {
         try {
             const response = await axiosInstance.post("/api/auth/token/refresh", { refreshToken: token });

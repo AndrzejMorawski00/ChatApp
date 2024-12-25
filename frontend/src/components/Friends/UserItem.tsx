@@ -1,24 +1,23 @@
-import { Friend } from "../../types/Friends";
 import { UserData } from "../../types/Users";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
+import { HandleAddFriend } from "../../types/Friends";
 interface Props {
     user: UserData;
+    handleAddFriend: HandleAddFriend;
 }
 
-const UserItem = ({ user }: Props) => {
-    
-    const handleAddFriend = () => {
-        console.log('Add Friend');
-    }
-
+const UserItem = ({ user, handleAddFriend }: Props) => {
     return (
-        <li>
-            <div>
+        <li className="flex gap-2">
+            <div className="flex gap-2">
                 <p>{user.firstName}</p>
                 <p>{user.lastName}</p>
             </div>
             <div>
-                <button onClick={handleAddFriend}>Add Friend</button>
+                <button onClick={() => handleAddFriend(user.email)}>
+                    <FontAwesomeIcon icon={faUserPlus} />
+                </button>
             </div>
         </li>
     );

@@ -1,23 +1,34 @@
-import { useDispatch, useSelector } from "react-redux";
-import { StoreState } from "../../redux/store";
+import { useDispatch } from "react-redux";
 import { handleSearchBarChange } from "../../redux/friends/friendsSearchSlice";
+import { useEffect, useState } from "react";
 
 const FriendsSearchBar = () => {
     const dispatch = useDispatch();
-    const searchBarValue = useSelector((state: StoreState) => state.friendsSearch.searchBarValue);
+    const [searchBarInput, setSeachBarInput] = useState<string>("");
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            dispatch(handleSearchBarChange({ searchBarValue: searchBarInput }));
+        }, 300);
+
+        return () => clearTimeout(handler);
+    }, [searchBarInput]);
 
     const handleInputChange = (newValue: string) => {
-        dispatch(handleSearchBarChange({ searchBarValue: newValue }));
+        setSeachBarInput(newValue);
     };
 
     const handleButtonClick = () => {
+        setSeachBarInput("");
         dispatch(handleSearchBarChange({ searchBarValue: "" }));
     };
 
     return (
         <form action="">
-            <input type="text" value={searchBarValue} onChange={(e) => handleInputChange(e.target.value)} />
-            <button type="button" onClick={handleButtonClick}>Clear</button>
+            <input type="text" value={searchBarInput} onChange={(e) => handleInputChange(e.target.value)} />
+            <button type="button" onClick={handleButtonClick}>
+                Clear
+            </button>
         </form>
     );
 };
