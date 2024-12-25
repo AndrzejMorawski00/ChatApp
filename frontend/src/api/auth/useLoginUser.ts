@@ -3,14 +3,11 @@ import { useNavigate } from "react-router";
 import { LoginFormType, useLoginUserType } from "../../types/auth";
 import axiosInstance from "../../utils/api/apiConfig";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants/auth";
-import { useDispatch } from "react-redux";
-import { authenticateUser } from "../../redux/auth/authSlice";
-import { extractUserData } from "../../utils/auth/extractUserData";
 
 const useLoginUser = (): useLoginUserType => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const dispatch = useDispatch();
+
     const navigate = useNavigate();
     const loginUser = async ({ email, password }: LoginFormType): Promise<void> => {
         setLoading(true);

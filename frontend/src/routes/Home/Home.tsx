@@ -1,11 +1,13 @@
-import Friends from "../Friends/Friends";
+import { Link, Outlet } from "react-router";
 
 
 const Home = () => {
     return (
         <div>
-            <Friends />
+            <Link to='friends/'>Friends</Link>
             {/* <Chats/> */}
+
+            <Outlet/>
         </div>
     );
 };

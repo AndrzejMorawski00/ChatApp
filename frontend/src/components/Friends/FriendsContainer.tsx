@@ -1,26 +1,20 @@
-import { Friend, HandleAcceptFriend, HandleRemoveFriend } from "../../types/Friends";
+import { FriendAPIResponse,} from "../../types/Friends";
 import FriendList from "./FriendList";
 
 interface Props {
-    friends: Friend[];
+    friends: FriendAPIResponse;
     isLoading: boolean;
     isError: boolean;
-    handleAcceptFriend: HandleAcceptFriend;
-    handleRemoveFriend: HandleRemoveFriend;
+
 }
 
-const FriendsContainer = ({ friends, isLoading, isError, handleAcceptFriend, handleRemoveFriend }: Props) => {
-    const acceptedFriends: Friend[] = [];
-    const pendingFriends: Friend[] = [];
+export const FRIEND_COLUMNS = {
+    accepted: "Friends:",
+    sent: "My Requests:",
+    received: 'Friendship Requests:',
+} as const;
 
-    friends.forEach((friend) => {
-        if (friend.status == "accepted") {
-            acceptedFriends.push(friend);
-        } else {
-            pendingFriends.push(friend);
-        }
-    });
-
+const FriendsContainer = ({ friends, isLoading, isError }: Props) => {
     if (isLoading) {
         return (
             <div>
@@ -37,21 +31,21 @@ const FriendsContainer = ({ friends, isLoading, isError, handleAcceptFriend, han
         );
     }
 
-    console.log(`Pending: ${pendingFriends} Accepted: ${acceptedFriends}`);
-
     return (
         <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
+                <FriendList
+                    listName={FRIEND_COLUMNS.received}
+                    friends={friends.received}
+                />
+                <FriendList
+                    listName={FRIEND_COLUMNS.sent}
+                    friends={friends.sent}
+                />
+            </div>
             <FriendList
-                listName="Friendship Requests:"
-                friends={pendingFriends}
-                handleAcceptFriend={handleAcceptFriend}
-                handleRemoveFriend={handleRemoveFriend}
-            />
-            <FriendList
-                listName="Friends:"
-                friends={acceptedFriends}
-                handleAcceptFriend={handleAcceptFriend}
-                handleRemoveFriend={handleRemoveFriend}
+                listName={FRIEND_COLUMNS.accepted}
+                friends={friends.accepted}
             />
         </div>
     );

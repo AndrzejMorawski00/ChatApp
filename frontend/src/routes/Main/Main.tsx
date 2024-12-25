@@ -1,4 +1,4 @@
-import {Outlet } from "react-router";
+import {Link, Outlet } from "react-router";
 import { useSelector } from "react-redux";
 import MainLink from "../../components/Main/MainLink";
 import useAuth from "../../api/auth/useAuth";
@@ -11,7 +11,7 @@ const Main = () => {
     return (
         <div className="flex flex-col h-screen w-screen">
             <header className="flex justify-end">
-                <h1>Chat App</h1>
+                {isAuthenticated? <Link to='home/'>Chat App</Link> : <h1>Chat App</h1>}
                 {isAuthenticated && (
                     <MainLink destination='/logout/' buttonText="Logout" />
                 )}

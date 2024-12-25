@@ -1,13 +1,25 @@
 import { UserData } from "./Users";
 
-export type Friend = {
+export type Friendship = {
     id: number;
-    userId: number;
+    senderID: number;
     friendData: UserData;
-    status: FrienshipStatus;
+    status: FriendshipStatus;
 };
 
-export type FrienshipStatus = "pending" | "accepted";
+export type FriendAPIResponse = {
+    accepted: Friendship[],
+    sent: Friendship[],
+    received: Friendship[],
+}
+
+
+export enum FriendshipStatus
+{
+   Pending = 0,
+   Accepted = 1
+}
+
 
 export type HandleAddFriend = (friendEmail: string) => Promise<void>;
 

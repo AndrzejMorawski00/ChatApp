@@ -11,9 +11,6 @@ const Friends = () => {
         friendsData,
         isLoadingFriends,
         isErrorFriends,
-        handleAddFriend,
-        handleAcceptFriend,
-        handleRemoveFriend,
     } = useFriendActions();
 
     return (
@@ -21,18 +18,19 @@ const Friends = () => {
             <div>
                 <FriendsSearchBar />
                 <UserList
-                    handleAddFriend={handleAddFriend}
+   
                     users={usersData ? usersData : []}
                     isLoading={isLoadingUsers}
                     isError={isErrorUsers}
                 />
             </div>
             <FriendsContainer
-                friends={friendsData ? friendsData : []}
+               
+                friends={friendsData ? friendsData : { accepted: [], sent: [], received: [] }}
                 isLoading={isLoadingFriends}
                 isError={isErrorFriends}
-                handleAcceptFriend={handleAcceptFriend}
-                handleRemoveFriend={handleRemoveFriend}
+                
+                
             />
         </div>
     );

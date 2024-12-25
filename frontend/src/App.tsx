@@ -6,7 +6,7 @@ import Logout from "./routes/Auth/Logout";
 import Home from "./routes/Home/Home";
 import ProtectedRoute from "./routes/Auth/ProtectedRoute";
 import Providers from "./providers/Providers";
-import One from "./routes/Home/One";
+import Friends from "./routes/Friends/Friends";
 
 const router = createBrowserRouter([
     {
@@ -22,8 +22,8 @@ const router = createBrowserRouter([
                         element: <Home />,
                         children: [
                             {
-                                path: "1/",
-                                element: <One />,
+                                path: 'friends/',
+                                element: <Friends/>
                             },
                         ],
                     },

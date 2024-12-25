@@ -1,14 +1,13 @@
-import { Friend, HandleAcceptFriend, HandleRemoveFriend } from "../../types/Friends";
+import { Friendship } from "../../types/Friends";
 import FriendItem from "./FriendItem";
+import { FRIEND_COLUMNS } from "./FriendsContainer";
 
 interface Props {
-    listName: string;
-    friends: Friend[];
-    handleAcceptFriend: HandleAcceptFriend;
-    handleRemoveFriend: HandleRemoveFriend;
+    listName: typeof FRIEND_COLUMNS[keyof typeof FRIEND_COLUMNS];
+    friends: Friendship[];
 }
 
-const FriendList = ({ listName, friends, handleAcceptFriend, handleRemoveFriend }: Props) => {
+const FriendList = ({ listName, friends }: Props) => {
     return (
         <div>
             <h2>{listName}</h2>
@@ -17,8 +16,7 @@ const FriendList = ({ listName, friends, handleAcceptFriend, handleRemoveFriend 
                     <FriendItem
                         key={friend.id}
                         friend={friend}
-                        handleAcceptFriend={handleAcceptFriend}
-                        handleRemoveFriend={handleRemoveFriend}
+                        actions={listName}
                     />
                 ))}
             </ul>
