@@ -14,6 +14,8 @@ namespace ChatAppASPNET.DBContext
         public DbSet<Chat> Chats { get; set; }
         public DbSet<ChatParticipant> ChatParticipants { get; set; }
 
+        public DbSet<Message> Messages { get; set; }
+
         public DbSet<SimpleMessage> SimpleMessages { get; set; }
 
 
@@ -28,9 +30,10 @@ namespace ChatAppASPNET.DBContext
             modelBuilder.Entity<Chat>().ToTable("Chats");
             modelBuilder.Entity<ChatParticipant>().ToTable("ChatParcitipants");
             modelBuilder.Entity<SimpleMessage>().ToTable("SimpleMessages");
+            modelBuilder.Entity<Message>().ToTable("Messages");
 
             modelBuilder.Entity<Friend>()
-                .HasOne(f => f.User)
+                .HasOne(f => f.Sender)
                 .WithMany(u => u.Friends)
                 .HasForeignKey(f => f.SenderID)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -38,10 +41,11 @@ namespace ChatAppASPNET.DBContext
             modelBuilder.Entity<Password>()
                 .HasOne(p => p.User)
                 .WithOne(u => u.Password)
-                .HasForeignKey<Password>(p => p.UserID);
+                .HasForeignKey<Password>(p => p.UserID)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Friend>()
-                .HasOne(f => f.FriendUser)
+                .HasOne(f => f.Reciever)
                 .WithMany()
                 .HasForeignKey(f => f.ReceiverID)
                 .OnDelete(DeleteBehavior.Restrict);
@@ -55,6 +59,19 @@ namespace ChatAppASPNET.DBContext
                 .HasOne(cp => cp.User)
                 .WithMany(u => u.Participants)
                 .HasForeignKey(cp => cp.UserID);
+
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Chat)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(m => m.ChatID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany(u => u.Messages)
+                .HasForeignKey(m => m.SenderID)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
     }

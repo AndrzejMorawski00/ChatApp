@@ -20,8 +20,10 @@ namespace ChatAppASPNET.DBContext.Entities
 
         public string ChatName { get; set; } = string.Empty;
 
-        public ICollection<ChatParticipant> Participants { get; set; }
-        public ICollection<Message> Messages { get; set; }
+        public int Owner { get; set; }
+
+        public ICollection<ChatParticipant> Participants { get; set; } = new List<ChatParticipant>();
+        public ICollection<Message> Messages { get; set; } = new List<Message>();
     }
 
 }

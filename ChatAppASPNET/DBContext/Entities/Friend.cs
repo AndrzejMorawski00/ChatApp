@@ -20,9 +20,9 @@ namespace ChatAppASPNET.DBContext.Entities
 
         public FriendshipStatus Status { get; set; }
 
-        public UserData User { get; set; }
+        public  UserData Sender { get; set; }
 
-        public UserData FriendUser { get; set; }
+        public UserData Reciever { get; set; }
 
     }
 

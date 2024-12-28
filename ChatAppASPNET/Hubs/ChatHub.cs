@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using ChatAppASPNET.DBContext;
 using ChatAppASPNET.DBContext.Entities;
+using ChatAppASPNET.Models.API;
 using ChatAppASPNET.Models.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -45,8 +46,8 @@ namespace ChatAppASPNET.Hubs
         {
             Console.WriteLine("Add Friend");
             try
-            {   
-                
+            {
+
                 var userEmail = Context.User.FindFirst(ClaimTypes.Email)?.Value;
 
                 if (string.IsNullOrEmpty(userEmail) || string.IsNullOrEmpty(friendEmail))
@@ -112,30 +113,28 @@ namespace ChatAppASPNET.Hubs
                     throw new Exception("Failed to fetch friend");
                 }
 
-
-                var existingChat = await _dbContext.Chats
-                    .Where(c => c.Participants.Any(p => p.UserID == user.ID) && c.Participants.Any(p => p.UserID == friend.ID))
-                    .FirstOrDefaultAsync();
-
-                if (existingChat == null)
+                var newChat = new Chat
                 {
-                    var newChat = new Chat
-                    {
-                        ChatType = ChatType.DM, 
-                        ChatName = $"{user.FirstName} & {friend.FirstName}", 
-                        Participants = new List<ChatParticipant>
+                    ChatType = ChatType.DM,
+                    ChatName = $"{user.FirstName} & {friend.FirstName}",
+                };
+
+                await _dbContext.Chats.AddAsync(newChat);
+
+                var p1 = new ChatParticipant
                 {
-                    new ChatParticipant { UserID = user.ID },
-                    new ChatParticipant { UserID = friend.ID }
-                },
-                        Messages = new List<Message>() 
-                    };
+                    ChatID = newChat.ID,
+                    UserID = user.ID,
+                };
 
-                    _dbContext.Chats.Add(newChat);
-                    await _dbContext.SaveChangesAsync(); 
-                }
+                var p2 = new ChatParticipant
+                {
+                    ChatID = newChat.ID,
+                    UserID = friend.ID,
+                };
 
-                await _dbContext.SaveChangesAsync();
+                newChat.Participants.Add(p1);
+                newChat.Participants.Add(p2);
 
                 await _dbContext.SaveChangesAsync();
 
@@ -146,7 +145,7 @@ namespace ChatAppASPNET.Hubs
 
             catch (Exception ex)
             {
-                Console.WriteLine($"Something went wrong: { ex.Message}");
+                Console.WriteLine($"Something went wrong: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
             }
         }
@@ -162,20 +161,38 @@ namespace ChatAppASPNET.Hubs
                     throw new Exception("Failed to fetch friendship object");
                 }
 
-                var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.ID == friendship.SenderID);
-                var friend = await _dbContext.UserData.FirstOrDefaultAsync(u => u.ID == friendship.ReceiverID);
+                var sender = await _dbContext.UserData.FirstOrDefaultAsync(u => u.ID == friendship.SenderID);
+                var receiver = await _dbContext.UserData.FirstOrDefaultAsync(u => u.ID == friendship.ReceiverID);
 
-                if (user == null || friend == null)
+                if (sender == null || receiver == null)
                 {
                     throw new Exception("Failed to fetch user or friend");
                 }
+
+                var chat = await _dbContext.Chats
+                    .Include(c => c.Participants)
+                    .FirstOrDefaultAsync(c =>
+                        c.ChatType == ChatType.DM &&
+                        c.Participants.Any(p => p.UserID == sender.ID) &&
+                        c.Participants.Any(p => p.UserID == receiver.ID));
+
+                if (chat != null)
+                {
+                    var chatParticipants = chat.Participants.Where(p => p.UserID == sender.ID || p.UserID == receiver.ID).ToList();
+                    var messages = _dbContext.Messages.Where(m => m.ChatID == chat.ID).ToList();
+                    _dbContext.Messages.RemoveRange(messages);
+                    _dbContext.ChatParticipants.RemoveRange(chatParticipants);
+                    _dbContext.Chats.Remove(chat);
+
+                }
+
 
                 _dbContext.Remove(friendship);
                 await _dbContext.SaveChangesAsync();
 
 
-                await Clients.Group(user.Email).SendAsync("FriendshiCanceled");
-                await Clients.Group(friend.Email).SendAsync("FriendshiCanceled");
+                await Clients.Group(sender.Email).SendAsync("FriendshipCancelled");
+                await Clients.Group(receiver.Email).SendAsync("FriendshipCancelled");
 
             }
 
@@ -185,31 +202,123 @@ namespace ChatAppASPNET.Hubs
             }
         }
 
-        public async Task SendMessage([FromBody] SimpleMessageModel model)
+
+        public async Task CreateNewChat([FromBody] PostChatModel model)
         {
-            Console.WriteLine("Hello world");
             try
             {
-                Console.WriteLine($"Message received from {model.UserName}: {model.Content}");
-                var dbMessage = new SimpleMessage
+                var userEmail = Context?.User?.FindFirst(ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(userEmail))
                 {
-                    CID = model.CID,
-                    UserName = model.UserName,
-                    Content = model.Content,
-                    CreatedTime = DateTime.UtcNow,
+                    throw new Exception("Failed to fetch user data.");
+                }
+
+                var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == userEmail);
+
+                if (user == null)
+                {
+                    throw new Exception("Failed to fetch user data");
+                }
+
+                var newChat = new Chat
+                {
+                    ChatType = ChatType.Group,
+                    ChatName = model.ChatName,
+                    Owner = user.ID,
                 };
 
-                await _dbContext.AddAsync(dbMessage);
+                _dbContext.Add(newChat);
+
+                model.ParticipantsID.Add(user.ID);
+
+                var userIDSet = new HashSet<int>(model.ParticipantsID);
+
+                var participants = await _dbContext.UserData.Where(u => userIDSet.Contains(u.ID)).Select(u => new ChatParticipant
+                {
+                    ChatID = newChat.ID,
+                    UserID = u.ID,
+                }).ToListAsync();
+                _dbContext.ChatParticipants.AddRange(participants);
+
+                newChat.Participants = participants;
+
                 await _dbContext.SaveChangesAsync();
-                await Clients.All.SendAsync("ReceiveMessage");
+
+                var groupName = $"{newChat.ChatName}_{newChat.ID}";
+
+                foreach (var participant in participants)
+                {
+                    var participantEmail = participant.User.Email;
+                    await Clients.Group(participantEmail).SendAsync("AddedToChat");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in SendMessage: {ex.Message}");
-                throw;
+                Console.WriteLine($"Something went wrong: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
             }
         }
 
+        public async Task JoinGroup(int groupID)
+        {
+            try
+            {
+                var chat = await _dbContext.Chats.FirstOrDefaultAsync(c =>  c.ID == groupID);
+
+                if (chat == null)
+                {
+                    throw new Exception("Failed to join to a group");
+                }
+
+                var groupName = $"{chat.ChatName}_{chat.ID}";
+                await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Something went wrong: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            }
+
+        }
+
+        public async Task SendMessage([FromBody] RequestMessageModel model)
+        {
+            try
+            {
+                var userEmail = Context?.User?.FindFirst(ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    throw new Exception("Failed to fetch user data.");
+                }
+
+                var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == userEmail);
+                var chat = await _dbContext.Chats.FirstOrDefaultAsync(c => c.ID == model.ChatID);
+
+                if (user == null || chat is null)
+                {
+                    throw new Exception("Failed to fetch data");
+                }
+
+                var newMessage = new Message
+                {
+                    ChatID = chat.ID,
+                    SenderID = user.ID,
+                    SentTime = DateTime.Now,
+                    Content = model.Content,
+                };
+
+                await _dbContext.AddAsync(newMessage);
+                await _dbContext.SaveChangesAsync();
+
+                var groupName = $"{chat.ChatName}_{chat.ID}";
+                await Clients.Group(groupName).SendAsync("MessageSent");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Something went wrong: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            }
+        }
 
 
         public override Task OnDisconnectedAsync(Exception? exception)
