@@ -6,4 +6,4 @@ export type PaginatedResponse<T> = {
 };
 
 
-export type FetchInfiniteObject<T> = (pageParam: number) => Promise<PaginatedResponse<T>>;
+export type FetchInfiniteObject<T, K> = (pageParam: K) => Promise<PaginatedResponse<T>>;

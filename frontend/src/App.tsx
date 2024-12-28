@@ -7,6 +7,8 @@ import Home from "./routes/Home/Home";
 import ProtectedRoute from "./routes/Auth/ProtectedRoute";
 import Providers from "./providers/Providers";
 import Friends from "./routes/Friends/Friends";
+import Chats from "./routes/Chats/Chats";
+import ChatDetails from "./components/Chats/ChatDetails";
 
 const router = createBrowserRouter([
     {
@@ -24,6 +26,16 @@ const router = createBrowserRouter([
                             {
                                 path: 'friends/',
                                 element: <Friends/>
+                            },
+                            {
+                                path: 'chats/',
+                                element: <Chats/>,
+                                children: [
+                                    {
+                                        path: ":chatID",
+                                        element: <ChatDetails />
+                                    }
+                                ]
                             },
                         ],
                     },

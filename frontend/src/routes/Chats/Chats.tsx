@@ -1,29 +1,25 @@
-import { useState } from "react";
-import { useMessages } from "../../api/signalR/useMessages";
-import { NewMessage } from "../../types/messages";
+import { Outlet } from "react-router";
+import ChatContainer from "../../components/Chats/ChatContainer";
 
 const Chats = () => {
-    const [userName, setUserName] = useState<string>("User");
-    const [message, setMessage] = useState<string>("");
-    const { data, sendMessage, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useMessages();
+    // const [userName, setUserName] = useState<string>("User");
+    // const [message, setMessage] = useState<string>("");
+    // const { data, sendMessage, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useMessages();
 
-    const messages = data?.pages.flatMap((page) => page.items) || [];
+    // const messages = data?.pages.flatMap((page) => page.items) || [];
 
-    const handleSendMessage = async () => {
-        if (message.trim()) {
-            const newMessage: NewMessage = {
-                userName,
-                content: message,
-                cid: 1,
-            };
-            await sendMessage(newMessage);
-            setMessage("");
-        }
-    };
-
-    return (
-        <div>
-            <h2>Chat App</h2>
+    // const handleSendMessage = async () => {
+    //     if (message.trim()) {
+    //         const newMessage: NewMessage = {
+    //             userName,
+    //             content: message,
+    //             cid: 1,
+    //         };
+    //         await sendMessage(newMessage);
+    //         setMessage("");
+    //     }
+    // };
+    {/* <h2>Chat App</h2>
             <div>
                 <p>Current Username: {userName}</p>
                 <button onClick={() => setUserName("Thing")}>Thing</button>
@@ -53,7 +49,15 @@ const Chats = () => {
                         </li>
                     ))}
                 </ul>
-            )}
+            )} */}
+
+    return (
+        <div className="flex gap-1">
+            <div className="w-25">
+            <Outlet />
+            </div>
+            <ChatContainer />
+            
         </div>
     );
 };

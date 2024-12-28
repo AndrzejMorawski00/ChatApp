@@ -1,14 +1,11 @@
-import { UserData } from "../../types/Users";
+import { useUsersActions } from "../../api/signalR/useUsersActions";
 import UserItem from "./UserItem";
 
-interface Props {
-    users: UserData[];
-    isLoading: boolean;
-    isError: boolean;
-}
+interface Props {}
 
-const UserList = ({ users, isLoading, isError }: Props) => {
-    if (isLoading) {
+const UserList = ({}: Props) => {
+    const { usersData, isLoadingUsers, isErrorUsers } = useUsersActions();
+    if (isLoadingUsers) {
         return (
             <div>
                 <p>Loading...</p>
@@ -16,7 +13,7 @@ const UserList = ({ users, isLoading, isError }: Props) => {
         );
     }
 
-    if (isError) {
+    if (isErrorUsers) {
         return (
             <div>
                 <p>Error</p>
@@ -26,7 +23,7 @@ const UserList = ({ users, isLoading, isError }: Props) => {
 
     return (
         <ul>
-            {users.map((user, idx) => (
+            {usersData.map((user, idx) => (
                 <UserItem key={idx} user={user} />
             ))}
         </ul>

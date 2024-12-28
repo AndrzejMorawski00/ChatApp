@@ -1,26 +1,12 @@
-import { useSelector } from "react-redux";
 import { FriendAPIResponse } from "../../types/Friends";
-import { UserData } from "../../types/Users";
 import useGetRequest from "../useGetRequest/useGetRequest";
 import useSignalRConnection from "./useSignalRConnection";
-import { StoreState } from "../../redux/store";
+
 import { useEffect } from "react";
 
 export const useFriendActions = () => {
     const connection = useSignalRConnection();
 
-    const { searchBarValue } = useSelector((store: StoreState) => store.friendsSearch);
-
-    const {
-        data: usersData,
-        isLoading: isLoadingUsers,
-        isError: isErrorUsers,
-        refetch: refetchUsers,
-    } = useGetRequest<UserData[]>({
-        queryKeys: ["users", "potentialFirends", searchBarValue],
-        endpoint: `/api/UserData/GetAll?searchParameter=${searchBarValue}`,
-        keepData: true,
-    });
     const {
         data: friendsData,
         isLoading: isLoadingFriends,
@@ -30,28 +16,18 @@ export const useFriendActions = () => {
 
     useEffect(() => {
         if (connection) {
-            const handleUsersAndFriendsRefetch = async () => {
-                await refetchUsers();
-                await refetchFriends();
-            };
-
             const handleFriendsRefetch = async () => {
-                console.log('xD');
                 await refetchFriends();
             };
 
-            connection.on("FriendshipRequestRecieved", handleUsersAndFriendsRefetch);
+            connection.on("FriendshipRequestRecieved", handleFriendsRefetch);
             connection.on("FriendshipAccepted", handleFriendsRefetch);
-            connection.on("FriendshiCanceled", handleUsersAndFriendsRefetch);
+            connection.on("FriendshipCancelled", handleFriendsRefetch);
         }
-    }, [connection, refetchFriends, refetchUsers]);
-
+    }, [connection, refetchFriends]);
 
     return {
-        usersData,
-        isLoadingUsers,
-        isErrorUsers,
-        friendsData,
+        friendsData: friendsData ? friendsData : { accepted: [], sent: [], received: [] },
         isLoadingFriends,
         isErrorFriends,
     };
