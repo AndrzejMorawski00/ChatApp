@@ -33,6 +33,7 @@ namespace ChatAppASPNET.Hubs
                     var clientId = Context?.ConnectionId;
 
                     await Groups.AddToGroupAsync(clientId!, userEmail);
+                    await Clients.Groups(userEmail).SendAsync("Connected");
                 }
             }
             catch (Exception ex)
@@ -63,18 +64,38 @@ namespace ChatAppASPNET.Hubs
                     throw new Exception("User or friend not found");
                 }
 
-                var friendshipRequest = new Friend
+                var friendship = new Friend
                 {
                     SenderID = user.ID,
                     ReceiverID = friend.ID,
                     Status = FriendshipStatus.Pending,
                 };
 
-                await _dbContext.Friends.AddAsync(friendshipRequest);
+                await _dbContext.Friends.AddAsync(friendship);
                 await _dbContext.SaveChangesAsync();
 
-                await Clients.Groups(userEmail).SendAsync("FriendshipRequestRecieved");
-                await Clients.Groups(friendEmail).SendAsync("FriendshipRequestRecieved");
+                var userFriendshipRequestModel = new FriendModel
+                {
+                    ID = friendship.ID,
+                    SenderID = friendship.SenderID,
+                    ReceiverID = friendship.ReceiverID,
+                    SenderData = Utils.ToUserDataModel(friendship.Sender),
+                    ReceiverData = Utils.ToUserDataModel(friendship.Reciever),
+                    IsSender = true,
+                };
+
+                var friendFriendshipRequestModel = new FriendModel
+                {
+                    ID = friendship.ID,
+                    SenderID = friendship.SenderID,
+                    ReceiverID = friendship.ReceiverID,
+                    SenderData = Utils.ToUserDataModel(friendship.Sender),
+                    ReceiverData = Utils.ToUserDataModel(friendship.Reciever),
+                    IsSender = false,
+                };
+
+                await Clients.Group(userEmail).SendAsync("FriendshipRequestRecieved", userFriendshipRequestModel);
+                await Clients.Group(friendEmail).SendAsync("FriendshipRequestRecieved", friendFriendshipRequestModel);
             }
             catch (Exception ex) { Console.WriteLine(ex.ToString()); }
         }
@@ -97,15 +118,15 @@ namespace ChatAppASPNET.Hubs
                     throw new Exception("Failed to fetch user");
                 }
 
-                var friendshipRequest = await _dbContext.Friends.FirstOrDefaultAsync(fr => fr.ID == friendshipId);
+                var friendship = await _dbContext.Friends.FirstOrDefaultAsync(fr => fr.ID == friendshipId);
 
-                if (friendshipRequest == null)
+                if (friendship == null)
                 {
                     throw new Exception("Failed to fetch friendship object");
                 }
-                friendshipRequest.Status = FriendshipStatus.Accepted;
+                friendship.Status = FriendshipStatus.Accepted;
 
-                var friendID = friendshipRequest.SenderID == user.ID ? friendshipRequest.ReceiverID : friendshipRequest.SenderID;
+                var friendID = friendship.SenderID == user.ID ? friendship.ReceiverID : friendship.SenderID;
 
                 var friend = await _dbContext.UserData.FirstOrDefaultAsync(u => u.ID == friendID);
                 if (friend == null)
@@ -139,8 +160,30 @@ namespace ChatAppASPNET.Hubs
                 await _dbContext.SaveChangesAsync();
 
                 Console.WriteLine($"User Email: {userEmail} Friend Email:{friend.Email} ");
-                await Clients.Group(userEmail).SendAsync("FriendshipAccepted");
-                await Clients.Group(friend.Email).SendAsync("FriendshipAccepted");
+
+                var userFriendshipRequestModel = new FriendModel
+                {
+                    ID = friendship.ID,
+                    SenderID = friendship.SenderID,
+                    ReceiverID = friendship.ReceiverID,
+                    SenderData = Utils.ToUserDataModel(friendship.Sender),
+                    ReceiverData = Utils.ToUserDataModel(friendship.Reciever),
+                    IsSender = true,
+                };
+
+                var friendFriendshipRequestModel = new FriendModel
+                {
+                    ID = friendship.ID,
+                    SenderID = friendship.SenderID,
+                    ReceiverID = friendship.ReceiverID,
+                    SenderData = Utils.ToUserDataModel(friendship.Sender),
+                    ReceiverData = Utils.ToUserDataModel(friendship.Reciever),
+                    IsSender = false,
+                };
+
+
+                await Clients.Group(userEmail).SendAsync("FriendshipAccepted", userFriendshipRequestModel);
+                await Clients.Group(friend.Email).SendAsync("FriendshipAccepted", friendFriendshipRequestModel);
             }
 
             catch (Exception ex)
@@ -186,13 +229,32 @@ namespace ChatAppASPNET.Hubs
 
                 }
 
+                var userFriendshipRequestModel = new FriendModel
+                {
+                    ID = friendship.ID,
+                    SenderID = friendship.SenderID,
+                    ReceiverID = friendship.ReceiverID,
+                    SenderData = Utils.ToUserDataModel(friendship.Sender),
+                    ReceiverData = Utils.ToUserDataModel(friendship.Reciever),
+                    IsSender= true,
+                };
+
+                var friendFriendshipRequestModel = new FriendModel
+                {
+                    ID = friendship.ID,
+                    SenderID = friendship.SenderID,
+                    ReceiverID = friendship.ReceiverID,
+                    SenderData = Utils.ToUserDataModel(friendship.Sender),
+                    ReceiverData = Utils.ToUserDataModel(friendship.Reciever),
+                    IsSender = false,
+                };
 
                 _dbContext.Remove(friendship);
                 await _dbContext.SaveChangesAsync();
 
 
-                await Clients.Group(sender.Email).SendAsync("FriendshipCancelled");
-                await Clients.Group(receiver.Email).SendAsync("FriendshipCancelled");
+                await Clients.Group(sender.Email).SendAsync("FriendshipCancelled", userFriendshipRequestModel);
+                await Clients.Group(receiver.Email).SendAsync("FriendshipCancelled", friendFriendshipRequestModel);
 
             }
 
@@ -203,67 +265,67 @@ namespace ChatAppASPNET.Hubs
         }
 
 
-        public async Task CreateNewChat([FromBody] PostChatModel model)
-        {
-            try
-            {
-                var userEmail = Context?.User?.FindFirst(ClaimTypes.Email)?.Value;
-                if (string.IsNullOrEmpty(userEmail))
-                {
-                    throw new Exception("Failed to fetch user data.");
-                }
+        //public async Task CreateNewChat([FromBody] PostChatModel model)
+        //{
+        //    try
+        //    {
+        //        var userEmail = Context?.User?.FindFirst(ClaimTypes.Email)?.Value;
+        //        if (string.IsNullOrEmpty(userEmail))
+        //        {
+        //            throw new Exception("Failed to fetch user data.");
+        //        }
 
-                var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == userEmail);
+        //        var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == userEmail);
 
-                if (user == null)
-                {
-                    throw new Exception("Failed to fetch user data");
-                }
+        //        if (user == null)
+        //        {
+        //            throw new Exception("Failed to fetch user data");
+        //        }
 
-                var newChat = new Chat
-                {
-                    ChatType = ChatType.Group,
-                    ChatName = model.ChatName,
-                    Owner = user.ID,
-                };
+        //        var newChat = new Chat
+        //        {
+        //            ChatType = ChatType.Group,
+        //            ChatName = model.ChatName,
+        //            Owner = user.ID,
+        //        };
 
-                _dbContext.Add(newChat);
+        //        _dbContext.Add(newChat);
 
-                model.ParticipantsID.Add(user.ID);
+        //        model.ParticipantsID.Add(user.ID);
 
-                var userIDSet = new HashSet<int>(model.ParticipantsID);
+        //        var userIDSet = new HashSet<int>(model.ParticipantsID);
 
-                var participants = await _dbContext.UserData.Where(u => userIDSet.Contains(u.ID)).Select(u => new ChatParticipant
-                {
-                    ChatID = newChat.ID,
-                    UserID = u.ID,
-                }).ToListAsync();
-                _dbContext.ChatParticipants.AddRange(participants);
+        //        var participants = await _dbContext.UserData.Where(u => userIDSet.Contains(u.ID)).Select(u => new ChatParticipant
+        //        {
+        //            ChatID = newChat.ID,
+        //            UserID = u.ID,
+        //        }).ToListAsync();
+        //        _dbContext.ChatParticipants.AddRange(participants);
 
-                newChat.Participants = participants;
+        //        newChat.Participants = participants;
 
-                await _dbContext.SaveChangesAsync();
+        //        await _dbContext.SaveChangesAsync();
 
-                var groupName = $"{newChat.ChatName}_{newChat.ID}";
+        //        var groupName = $"{newChat.ChatName}_{newChat.ID}";
 
-                foreach (var participant in participants)
-                {
-                    var participantEmail = participant.User.Email;
-                    await Clients.Group(participantEmail).SendAsync("AddedToChat");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-            }
-        }
+        //        foreach (var participant in participants)
+        //        {
+        //            var participantEmail = participant.User.Email;
+        //            await Clients.Group(participantEmail).SendAsync("AddedToChat");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Something went wrong: {ex.Message}");
+        //        Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+        //    }
+        //}
 
         public async Task JoinGroup(int groupID)
         {
             try
             {
-                var chat = await _dbContext.Chats.FirstOrDefaultAsync(c =>  c.ID == groupID);
+                var chat = await _dbContext.Chats.FirstOrDefaultAsync(c => c.ID == groupID);
 
                 if (chat == null)
                 {
@@ -328,8 +390,5 @@ namespace ChatAppASPNET.Hubs
             Console.WriteLine($"Client disconnected: {clientId}");
             return base.OnDisconnectedAsync(exception);
         }
-
-
-
     }
 }

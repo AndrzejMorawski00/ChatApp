@@ -40,49 +40,57 @@ namespace ChatAppASPNET.Controllers.API
                 .Where(f => f.SenderID == user.ID || f.ReceiverID == user.ID)
                 .ToListAsync();
 
-            var accepted = new List<FriendModel>();
-            var sentByUser = new List<FriendModel>();
-            var receivedFromFriend = new List<FriendModel>();
-
-            foreach (var f in userFriends)
+            var friendModels = userFriends.Select(f => new FriendModel
             {
-                var friendModel = new FriendModel
-                {
-                    ID = f.ID,
-                    SenderID = f.SenderID,
-                    FriendData = _dbContext.UserData
-                        .Where(u => u.ID == (f.SenderID == user.ID ? f.ReceiverID : f.SenderID))
-                        .Select(u => new UserDataModel
-                        {
-                            Email = u.Email,
-                            FirstName = u.FirstName,
-                            LastName = u.LastName,
-                            ID = u.ID
-                        })
-                        .FirstOrDefault()!,
-                    Status = f.Status
-                };
+                ID = f.ID,
+                SenderID = f.SenderID,
+                ReceiverID = f.ReceiverID,
+                SenderData = _dbContext.UserData
+                    .Where(u => u.ID == f.SenderID)
+                    .Select(u => new UserDataModel
+                    {
+                        Email = u.Email,
+                        FirstName = u.FirstName,
+                        LastName = u.LastName,
+                        ID = u.ID
+                    })
+                    .FirstOrDefault()!,
+                ReceiverData = _dbContext.UserData
+                    .Where(u => u.ID == f.ReceiverID)
+                    .Select(u => new UserDataModel
+                    {
+                        Email = u.Email,
+                        FirstName = u.FirstName,
+                        LastName = u.LastName,
+                        ID = u.ID
+                    })
+                    .FirstOrDefault()!,
+                IsSender = f.SenderID == user.ID,
+                Status = f.Status
+            }).ToList();
 
-                if (f.Status == FriendshipStatus.Accepted)
+            var groupedResponse = new Dictionary<string, List<FriendModel>>()
+    {
+        { "accepted", new List<FriendModel>() },
+        { "sent", new List<FriendModel>() },
+        { "received", new List<FriendModel>() }
+    };
+
+            foreach (var friend in friendModels)
+            {
+                if (friend.Status == FriendshipStatus.Accepted)
                 {
-                    accepted.Add(friendModel);
+                    groupedResponse["accepted"].Add(friend);
                 }
-                else if (f.SenderID == user.ID)
+                else if (friend.Status != FriendshipStatus.Accepted && friend.IsSender)
                 {
-                    sentByUser.Add(friendModel);
+                    groupedResponse["sent"].Add(friend);
                 }
-                else if (f.ReceiverID == user.ID) 
+                else if (friend.Status != FriendshipStatus.Accepted && !friend.IsSender)
                 {
-                    receivedFromFriend.Add(friendModel);
+                    groupedResponse["received"].Add(friend);
                 }
             }
-
-            var groupedResponse = new
-            {
-                Accepted = accepted,
-                Sent= sentByUser,
-                Received = receivedFromFriend
-            };
 
             return Ok(groupedResponse);
         }

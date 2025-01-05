@@ -63,7 +63,8 @@ namespace ChatAppASPNET.Controllers.API
                         ID = m.SenderID,
                         FirstName = m.Sender.FirstName,
                         LastName = m.Sender.LastName
-                    }
+                    },
+                    Content = m.Content,
                 }).ToListAsync();
 
                 var paginatedList = new PaginatedResponse<ResponseMessageModel>(messages, totalCount, pageNumber, pageSize);
@@ -74,7 +75,6 @@ namespace ChatAppASPNET.Controllers.API
                 Console.WriteLine($"Something went wrong: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
                 throw;
-                return BadRequest(ex.Message);
             }
 
 
