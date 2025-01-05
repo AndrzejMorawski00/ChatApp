@@ -1,13 +1,16 @@
 import axios from "axios";
 import { ACCESS_TOKEN } from "../../constants/auth";
-import { store } from "../../redux/store";
-import { logout } from "../../redux/auth/authSlice";
 import { refreshToken } from "../auth/refreshToken";
 
+// Constants
+const DEVELOPMENT_MODE = "development";
+const CONTENT_TYPE_JSON = "application/json";
+const BEARER_PREFIX = "Bearer ";
+const HTTP_STATUS_UNAUTHORIZED = 401;
+
 export const getBaseAPIUrl = (): string => {
-    const isDevelopment = import.meta.env.MODE === "development";
+    const isDevelopment = import.meta.env.MODE === DEVELOPMENT_MODE;
     if (isDevelopment) {
-        console.log(import.meta.env.VITE_API_BASE_URL_LOCAL);
         return import.meta.env.VITE_API_BASE_URL_LOCAL;
     }
     return import.meta.env.VITE_API_BASE_URL_PROD;
@@ -16,7 +19,7 @@ export const getBaseAPIUrl = (): string => {
 const axiosInstance = axios.create({
     baseURL: getBaseAPIUrl(),
     headers: {
-        "Content-Type": "application/json",
+        "Content-Type": CONTENT_TYPE_JSON,
     },
 });
 
@@ -24,7 +27,7 @@ axiosInstance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem(ACCESS_TOKEN);
         if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+            config.headers.Authorization = `${BEARER_PREFIX} ${token}`;
         }
         return config;
     },
@@ -38,20 +41,20 @@ axiosInstance.interceptors.response.use(
         return response;
     },
     async (error) => {
-        const originalResponse = error.config;
+        const originalRequest = error.config;
 
-        if (error.response?.status === 401) {
+        if (error.response?.status === HTTP_STATUS_UNAUTHORIZED && !originalRequest._retry) {
+            originalRequest._retry = true;
             const refreshSuccess = await refreshToken();
             if (refreshSuccess) {
                 const token = localStorage.getItem(ACCESS_TOKEN);
                 if (token) {
-                    originalResponse.headers.Authorization = `Bearer ${token}`;
+                    originalRequest.headers.Authorization = `${BEARER_PREFIX} ${token}`;
                 }
-                return axiosInstance(originalResponse);
-            } 
-            store.dispatch(logout());
+                return axiosInstance(originalRequest);
+            }
         }
-
+        localStorage.clear();
         return Promise.reject(error);
     }
 );

@@ -1,19 +1,17 @@
-import { useFriendActions } from "../../api/signalR/useFriendActions";
+import { useFriendsActions } from "../../api/friends/useFriendsActions";
 import FriendList from "./FriendList";
 
-interface Props {
-
-}
+interface Props {}
 
 export const FRIEND_COLUMNS = {
     accepted: "Friends:",
     sent: "My Requests:",
-    received: 'Friendship Requests:',
+    received: "Friendship Requests:",
 } as const;
 
 const FriendsContainer = ({}: Props) => {
+    const { friendshipData, isLoadingFriends, isErrorFriends } = useFriendsActions();
 
-    const { friendsData, isLoadingFriends, isErrorFriends } = useFriendActions();
     if (isLoadingFriends) {
         return (
             <div>
@@ -35,16 +33,18 @@ const FriendsContainer = ({}: Props) => {
             <div className="flex flex-col gap-2">
                 <FriendList
                     listName={FRIEND_COLUMNS.received}
-                    friends={friendsData.received}
+                    friends={friendshipData.received.map((f) => ({ id: f.id, userData: f.senderData }))}
                 />
                 <FriendList
                     listName={FRIEND_COLUMNS.sent}
-                    friends={friendsData.sent}
+                    friends={friendshipData.sent.map((f) => ({ id: f.id, userData: f.receiverData }))}
                 />
             </div>
             <FriendList
                 listName={FRIEND_COLUMNS.accepted}
-                friends={friendsData.accepted}
+                friends={friendshipData.accepted.map((f) =>
+                    f.isSender ? { id: f.id, userData: f.receiverData } : { id: f.id, userData: f.senderData }
+                )}
             />
         </div>
     );

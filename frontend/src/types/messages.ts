@@ -1,18 +1,3 @@
-export type SimpleMessage = {
-    userName: string;
-    content: string;
-    cid: number;
-    createdTime: string;
-    id: number;
-};
-
-export type NewSimpleMessage = {
-    userName: string;
-    content: string;
-    cid: number;
-};
-
-
 export type MessageType = {
     id : number,
     chatID : number,
@@ -33,7 +18,9 @@ export type GetMessageType = {
 }
 
 
-export type NewMessage = {
-    chatID : number,
-    content : string,
-}
+export type PaginatedResponse<T> = {
+    count: number;
+    next: number | null;
+    prev: number | null;
+    items: T[];
+};

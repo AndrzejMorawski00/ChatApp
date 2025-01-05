@@ -1,22 +1,21 @@
-import { ReactNode } from "react";
 import QueryProvider from "./QueryProvider";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { Provider as ReduxProvider } from "react-redux";
-import { store } from "../redux/store";
+import AppContextProvider from "./AppContextProvider";
+import RoutingProvider from "./RoutingProvider";
 
-interface Props {
-    children: ReactNode;
-}
 
-const Providers = ({ children }: Props) => {
+
+
+
+const Providers = () => {
     return (
         <QueryProvider>
-            <ReduxProvider store={store}>
+            <AppContextProvider>
                 <>
-                    {children}
+                    <RoutingProvider/>
                     <ReactQueryDevtools />
                 </>
-            </ReduxProvider>
+            </AppContextProvider>
         </QueryProvider>
     );
 };

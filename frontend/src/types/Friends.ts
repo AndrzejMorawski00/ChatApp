@@ -1,28 +1,23 @@
+import { FriendshipStatus } from "./enums";
 import { UserData } from "./Users";
 
 export type Friendship = {
     id: number;
     senderID: number;
-    friendData: UserData;
+    receiverID: number;
+    senderData: UserData;
+    receiverData: UserData;
+    isSender: boolean;
     status: FriendshipStatus;
 };
 
 export type FriendAPIResponse = {
-    accepted: Friendship[],
-    sent: Friendship[],
-    received: Friendship[],
-}
+    accepted: Friendship[];
+    sent: Friendship[];
+    received: Friendship[];
+};
 
-
-export enum FriendshipStatus
-{
-   Pending = 0,
-   Accepted = 1
-}
-
-
-export type HandleAddFriend = (friendEmail: string) => Promise<void>;
-
-export type HandleAcceptFriend = (friendshipId: number) => Promise<void>;
-
-export type HandleRemoveFriend = (friendshipId : number) => Promise<void>
+export type FriendData = {
+    id: number;
+    userData: UserData;
+};

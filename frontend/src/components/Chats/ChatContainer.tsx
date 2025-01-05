@@ -1,19 +1,24 @@
-import useChatActions from "../../api/signalR/useChatActions";
-import { ChatObjectType, ChatType } from "../../types/Chats";
-import ChatList from "./ChatList";
+import useChatActions from "../../api/chats/useChatActions";
+import { ChatObjectType } from "../../types/Chats";
+import { ChatCategory } from "../../types/enums";
+import ChatList from "./ChatList/ChatList";
+
+// Constants
+
+const DM_CHATS_NAME = "Direct Messages";
+const GROUP_CHATS_NAME = "Group Chats";
 
 interface Props {}
 
 const ChatContainer = ({}: Props) => {
-    const { chats , isLoading, isError } = useChatActions();
+    const { chats, isLoadingChats, isErrorChats } = useChatActions();
 
-    const dmChats : ChatObjectType[] = [];
-    const groupChats : ChatObjectType[] = [];
+    const dmChats: ChatObjectType[] = [];
+    const groupChats: ChatObjectType[] = [];
 
+    chats.forEach((chat) => (chat.chatType === ChatCategory.DM ? dmChats.push(chat) : groupChats.push(chat)));
 
-    chats.forEach(chat => chat.chatType === ChatType.DM? dmChats.push(chat) : groupChats.push(chat));
-
-    if (isLoading) {
+    if (isLoadingChats) {
         return (
             <div>
                 <p>Loading...</p>
@@ -21,7 +26,7 @@ const ChatContainer = ({}: Props) => {
         );
     }
 
-    if (isError) {
+    if (isErrorChats) {
         return (
             <div>
                 <p>Error...</p>
@@ -29,12 +34,12 @@ const ChatContainer = ({}: Props) => {
         );
     }
 
-    
-
-    return <div className='w-20 pl-5'>
-        <ChatList listName="Direct Messages" chats={dmChats} />
-        <ChatList listName="Group Chats" chats={groupChats} />
-    </div>;
+    return (
+        <div className="w-20 pl-5">
+            <ChatList listName={DM_CHATS_NAME} chats={dmChats} />
+            <ChatList listName={GROUP_CHATS_NAME} chats={groupChats} />
+        </div>
+    );
 };
 
 export default ChatContainer;

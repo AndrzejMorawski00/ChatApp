@@ -18,7 +18,7 @@ const NewChatModal = ({} : Props) => {
             </button>
         </ReusableModal.Button>
         <ReusableModal.Content title="New Chat">
-            <NewChatForm/>
+            <NewChatForm handleOpenChange={(newValue : boolean) => setOpen(newValue)}/>
         </ReusableModal.Content>
     </ReusableModal>
 }

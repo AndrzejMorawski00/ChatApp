@@ -17,10 +17,6 @@ export type useLoginUserType = {
     error: string | null;
 };
 
-export type useLogoutType = {
-    logoutUser: () => void;
-};
-
 export type useRegisterUserType = {
     registerUser: (registerData: RegisterFormType) => Promise<void>;
     loading: boolean;

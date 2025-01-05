@@ -1,22 +1,24 @@
+import { ChatCategory } from "./enums";
+
 export type ChatObjectType = {
-    id : number, 
-    chatType : ChatType,
+    id: number;
+    chatType: ChatCategory;
 
-    chatName : string,
+    chatName: string;
 
-    owner : number,
-    participants : ChatParticipantType[]
+    owner: number;
+    participants: ChatParticipantType[];
+};
 
-}
+export type NewChatType = {
+    chatName: string;
+    participantsID: number[];
+};
 
 
-export enum ChatType {
-    DM = 0,
-    Group = 1,
-}
 
 export type ChatParticipantType = {
-    id : number,
-    firstName : string,
-    lastName : string,
-}
+    id: number;
+    firstName: string;
+    lastName: string;
+};

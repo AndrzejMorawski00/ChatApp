@@ -1,10 +1,10 @@
-import { Friendship } from "../../types/Friends";
+import { UserData } from "../../types/Users";
 import FriendItem from "./FriendItem";
 import { FRIEND_COLUMNS } from "./FriendsContainer";
 
 interface Props {
     listName: typeof FRIEND_COLUMNS[keyof typeof FRIEND_COLUMNS];
-    friends: Friendship[];
+    friends: { id: number; userData: UserData; }[];
 }
 
 const FriendList = ({ listName, friends }: Props) => {
@@ -15,7 +15,7 @@ const FriendList = ({ listName, friends }: Props) => {
                 {friends.map((friend) => (
                     <FriendItem
                         key={friend.id}
-                        friend={friend}
+                        friendship={friend}
                         actions={listName}
                     />
                 ))}

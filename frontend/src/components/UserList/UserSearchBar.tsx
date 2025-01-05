@@ -1,14 +1,16 @@
-import { useDispatch } from "react-redux";
-import { handleSearchBarChange } from "../../redux/friends/friendsSearchSlice";
 import { useEffect, useState } from "react";
+import useAppContext from "../../hooks/useAppContextHook";
 
-const FriendsSearchBar = () => {
-    const dispatch = useDispatch();
+const UserSearchBar = () => {
     const [searchBarInput, setSeachBarInput] = useState<string>("");
+
+    const { searchBarValue, handleSearchBarValueStateChange } = useAppContext();
 
     useEffect(() => {
         const handler = setTimeout(() => {
-            dispatch(handleSearchBarChange({ searchBarValue: searchBarInput }));
+            if (searchBarInput !== searchBarValue) {
+                handleSearchBarValueStateChange(searchBarInput);
+            }
         }, 300);
 
         return () => clearTimeout(handler);
@@ -20,7 +22,7 @@ const FriendsSearchBar = () => {
 
     const handleButtonClick = () => {
         setSeachBarInput("");
-        dispatch(handleSearchBarChange({ searchBarValue: "" }));
+        handleSearchBarValueStateChange("");
     };
 
     return (
@@ -33,4 +35,4 @@ const FriendsSearchBar = () => {
     );
 };
 
-export default FriendsSearchBar;
+export default UserSearchBar;

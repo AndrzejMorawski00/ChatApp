@@ -1,5 +1,5 @@
-import { ChatObjectType } from "../../types/Chats";
-import Chat from "./Chat";
+import { ChatObjectType } from "../../../types/Chats";
+import Chat from "./ChatItem";
 
 interface Props {
     listName: string;

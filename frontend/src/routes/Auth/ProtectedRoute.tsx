@@ -1,11 +1,12 @@
+import { Navigate, Outlet } from "react-router";
+import useAppContext from "../../hooks/useAppContextHook";
 
-import { useSelector } from "react-redux";
-import { Navigate, Outlet} from "react-router";
-import { StoreState } from "../../redux/store";
+// Constants
+const REDITECT_LINK = "/login/";
 
 const ProtectedRoute = () => {
-    const isAuthenticated = useSelector((state: StoreState) => state.auth.isAuthenticated);
-    return isAuthenticated? <Outlet/> : <Navigate to='/login/' />
+    const { isAuthenticated } = useAppContext();
+    return isAuthenticated ? <Outlet /> : <Navigate to={REDITECT_LINK} />;
 };
 
 export default ProtectedRoute;

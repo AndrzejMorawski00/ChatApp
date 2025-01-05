@@ -13,6 +13,12 @@ const INITIAL_REGISTER_FORM: RegisterFormType = {
     repeatPassword: "",
 };
 
+
+const LOGIN_PATH = "login/";
+const LOGIN_TEXT = "Login";
+
+const ERROR_MESSAGE = "Invalid key:";
+
 const Register = () => {
     const [formData, setFormData] = useState<RegisterFormType>(INITIAL_REGISTER_FORM);
     const { registerUser, loading, error } = useRegisterUser();
@@ -25,7 +31,7 @@ const Register = () => {
             });
             return;
         }
-        throw new Error(`Invalid key: ${key}`);
+        throw new Error(`${ERROR_MESSAGE} ${key}`);
     };
 
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
@@ -40,7 +46,7 @@ const Register = () => {
     return (
         <div>
             <header>
-                <Link to="/login/">Login</Link>
+                <Link to={LOGIN_PATH}>{LOGIN_TEXT}</Link>
             </header>
             <form action="" onSubmit={handleFormSubmit}>
                 <div>
@@ -91,7 +97,7 @@ const Register = () => {
                 <input type="submit" value="Register" />
             </form>
             {loading && <p>Loading...</p>}
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="text-red-500">{error}</p>}
         </div>
     );
 };

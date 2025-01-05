@@ -1,13 +1,17 @@
 import { UserData } from "../../types/Users";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUserPlus } from "@fortawesome/free-solid-svg-icons"
-import { sendFriendRequest } from "../../utils/ManagingFriends/actions";
+import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
+import useSignalRAction from "../../api/signalR/signalRActions";
+
+// Constants
+const ADD_FRIEND_ACTION = "AddFriend"
+
 interface Props {
     user: UserData;
-
 }
 
-const UserItem = ({ user}: Props) => {
+const UserItem = ({ user }: Props) => {
+    const { handleSignalRAction } = useSignalRAction();
     return (
         <li className="flex gap-2">
             <div className="flex gap-2">
@@ -15,7 +19,7 @@ const UserItem = ({ user}: Props) => {
                 <p>{user.lastName}</p>
             </div>
             <div>
-                <button onClick={() => sendFriendRequest(user.email)}>
+                <button onClick={async () => await handleSignalRAction(ADD_FRIEND_ACTION, user.email)}>
                     <FontAwesomeIcon icon={faUserPlus} />
                 </button>
             </div>

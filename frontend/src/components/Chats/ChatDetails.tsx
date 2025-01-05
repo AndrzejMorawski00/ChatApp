@@ -1,9 +1,16 @@
-import { useParams } from "react-router";
-import useMessagesActions from "../../api/signalR/useMessagesActions";
+import { useLocation, useParams } from "react-router";
 import Message from "../Messages/Message";
 import { useInView } from "react-intersection-observer";
 import { useEffect } from "react";
 import NewMessageForm from "./NewMessageForm";
+import useGetInfiniteMessages from "../../api/useGetInfiniteMessages.ts/useGetInfiniteMessages";
+import useAppContext from "../../hooks/useAppContextHook";
+import useSignalRAction from "../../api/signalR/signalRActions";
+import { MessageType } from "../../types/messages";
+
+// Constants
+const JOIN_GROUP_ACTION = "JoinGroup";
+
 interface Props {}
 
 type RouteParams = {
@@ -12,11 +19,13 @@ type RouteParams = {
 
 const ChatDetails = ({}: Props) => {
     const params = useParams<RouteParams>();
-
+    const location = useLocation();
     const chatID = parseInt(params.chatID || "", 10);
-    console.log(chatID);
-    const { messages, fetchNextPage, isFetchingNextPage, isFetchNextPageError, isLoading, isError, hasNextPage } =
-        useMessagesActions(chatID);
+    const { handleSignalRAction } = useSignalRAction();
+
+    const { handleCurrActiveChatChange } = useAppContext();
+    const { data, fetchNextPage, isFetchingNextPage, isFetchNextPageError, isLoading, isError, hasNextPage } =
+        useGetInfiniteMessages(chatID);
 
     const { ref, inView } = useInView();
 
@@ -25,6 +34,15 @@ const ChatDetails = ({}: Props) => {
             fetchNextPage();
         }
     }, [inView, hasNextPage, fetchNextPage]);
+
+    useEffect(() => {
+        handleCurrActiveChatChange(chatID);
+        handleSignalRAction(JOIN_GROUP_ACTION, chatID);
+
+        return () => {
+            handleCurrActiveChatChange(null);
+        };
+    }, [location.pathname]);
 
     if (isLoading) {
         <div>
@@ -37,6 +55,8 @@ const ChatDetails = ({}: Props) => {
             <p>Error...</p>
         </div>;
     }
+
+    const messages: MessageType[] = data?.pages.flatMap((page) => page.items) || [];
 
     const ulContent =
         messages.length > 0 ? (
@@ -56,7 +76,7 @@ const ChatDetails = ({}: Props) => {
     return (
         <div>
             {ulContent}
-            <NewMessageForm chatID={chatID}/>
+            <NewMessageForm chatID={chatID} />
         </div>
     );
 };

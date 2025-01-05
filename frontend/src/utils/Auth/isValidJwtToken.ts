@@ -1,14 +1,16 @@
 import { jwtDecode } from "jwt-decode";
 
-export const isValidJwtToken = (token: string): boolean => {
+// Constants
+const DECODING_TOKEN_ERROR_MESSAGE = "Error while decoding token";
+const DEFAULT_EXPIRATION = -1;
+const MILLISECONDS_IN_SECOND = 1000;
+export const isValidJWTToken = (token: string): boolean => {
     try {
         const decoded = jwtDecode(token);
-        const tokenExpiration = decoded.exp ? decoded.exp : -1;
-        return !(tokenExpiration < Date.now() / 1000);
+        const tokenExpiration = decoded.exp ? decoded.exp : DEFAULT_EXPIRATION;
+        return !(tokenExpiration < Date.now() / MILLISECONDS_IN_SECOND);
     } catch (error) {
-        console.error(`Error while decoding token. ${error}`);
+        console.error(`${DECODING_TOKEN_ERROR_MESSAGE}. ${error}`);
         return false;
     }
-    
 };
-

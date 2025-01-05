@@ -1,11 +1,13 @@
-import { useDispatch } from "react-redux";
 import Register from "./Register";
-import { logout } from "../../redux/auth/authSlice";
+import useAppContext from "../../hooks/useAppContextHook";
+import { useEffect } from "react";
 
 const LogoutAndRegister = () => {
-    const dispatch = useDispatch();
-    dispatch(logout());
-
+    const {handleAuthenticationStateChange} = useAppContext();
+    
+    useEffect(() => {
+        handleAuthenticationStateChange(false);
+    }, [])
     return <Register />;
 };
 

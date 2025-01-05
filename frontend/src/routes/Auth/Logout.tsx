@@ -1,16 +1,14 @@
-import { useDispatch } from "react-redux";
 import { Navigate } from "react-router";
-import { logout } from "../../redux/auth/authSlice";
 import { useEffect } from "react";
+import useAppContext from "../../hooks/useAppContextHook";
 
 const Logout = () => {
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        dispatch(logout());
-    }, [dispatch]);
+    const {handleAuthenticationStateChange} = useAppContext();
     
-    return <Navigate to="/" />;
+    useEffect(() => {handleAuthenticationStateChange(false)}, [])
+
+    localStorage.clear();
+    return <Navigate to="/" replace/>;
 };
 
 export default Logout;

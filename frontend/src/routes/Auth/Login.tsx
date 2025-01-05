@@ -6,10 +6,15 @@ import { Link } from "react-router";
 import { LoginFormType } from "../../types/auth";
 import useLoginUser from "../../api/auth/useLoginUser";
 
+// Constants
 const INITIAL_LOGIN_FORM: LoginFormType = {
     email: "",
     password: "",
 };
+const REGISTER_PATH = "register/";
+const REGISTER_TEXT = "Register";
+
+
 
 const Register = () => {
     const [formData, setFormData] = useState<LoginFormType>(INITIAL_LOGIN_FORM);
@@ -38,7 +43,7 @@ const Register = () => {
     return (
         <div>
             <header>
-                <Link to="/register/">Register</Link>
+                <Link to={REGISTER_PATH}>{REGISTER_TEXT}</Link>
             </header>
             <form action="" onSubmit={handleFormSubmit}>
                 <div>

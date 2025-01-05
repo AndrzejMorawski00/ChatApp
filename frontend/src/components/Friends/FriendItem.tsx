@@ -1,32 +1,52 @@
 import { ReactNode } from "react";
-import { Friendship } from "../../types/Friends";
+import { FriendData } from "../../types/Friends";
 import { FRIEND_COLUMNS } from "./FriendsContainer";
-import { acceptFriendRequest, removeFriendRequest } from "../../utils/ManagingFriends/actions";
+import { UserData } from "../../types/Users";
+import { SignalRContext } from "../../providers/SignalRContextProvider";
+
+// Constants
+const REMOVE_FRIEND_ACTION = "RemoveFriend";
+const ACCEPT_FRIEND_ACTION = "AcceptFriend";
+const REMOVE_FRIEND_TEXT = "Remove Friend";
+const ACCEPT_FRIEND_TEXT = "Accept";
+const CANCEL_FRIEND_TEXT = "Cancel";
 
 interface Props {
-    friend: Friendship;
+    friendship: { id: number; userData: UserData };
     actions: (typeof FRIEND_COLUMNS)[keyof typeof FRIEND_COLUMNS];
 }
 
-const getActions = (friend: Friendship, actions: (typeof FRIEND_COLUMNS)[keyof typeof FRIEND_COLUMNS]): ReactNode => {
+const getActions = (
+    invoke: any,
+    friendship: FriendData,
+    actions: (typeof FRIEND_COLUMNS)[keyof typeof FRIEND_COLUMNS]
+): ReactNode => {
     switch (actions) {
         case FRIEND_COLUMNS.accepted:
             return (
                 <div>
-                    <button onClick={() => removeFriendRequest(friend.id)}>Remove Friend</button>
+                    <button onClick={async () => await invoke(REMOVE_FRIEND_ACTION, friendship.id)}>
+                        {REMOVE_FRIEND_TEXT}
+                    </button>
                 </div>
             );
         case FRIEND_COLUMNS.received:
             return (
                 <div>
-                    <button onClick={() => acceptFriendRequest(friend.id)}>Accept</button>
-                    <button onClick={() => removeFriendRequest(friend.id)}>Cancel</button>
+                    <button onClick={async () => await invoke(ACCEPT_FRIEND_ACTION, friendship.id)}>
+                        {ACCEPT_FRIEND_TEXT}
+                    </button>
+                    <button onClick={async () => await invoke(REMOVE_FRIEND_ACTION, friendship.id)}>
+                        {CANCEL_FRIEND_TEXT}
+                    </button>
                 </div>
             );
         case FRIEND_COLUMNS.sent:
             return (
                 <div>
-                    <button onClick={() => removeFriendRequest(friend.id)}>Cancel</button>
+                    <button onClick={async () => await invoke(ACCEPT_FRIEND_ACTION, friendship.id)}>
+                        {CANCEL_FRIEND_TEXT}
+                    </button>
                 </div>
             );
         default:
@@ -34,13 +54,15 @@ const getActions = (friend: Friendship, actions: (typeof FRIEND_COLUMNS)[keyof t
     }
 };
 
-const FriendItem = ({ friend, actions }: Props) => {
+const FriendItem = ({ friendship, actions }: Props) => {
+    const invoke = SignalRContext.invoke;
+
     return (
         <li>
             <p>
-                {friend.friendData.firstName} {friend.friendData.lastName}
+                {friendship.userData.firstName} {friendship.userData.lastName}
             </p>
-            {getActions(friend, actions)}
+            {getActions(invoke, friendship, actions)}
         </li>
     );
 };
