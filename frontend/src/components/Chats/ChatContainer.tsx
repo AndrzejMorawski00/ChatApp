@@ -13,6 +13,8 @@ interface Props {}
 const ChatContainer = ({}: Props) => {
     const { chats, isLoadingChats, isErrorChats } = useChatActions();
 
+    console.log(chats);
+
     const dmChats: ChatObjectType[] = [];
     const groupChats: ChatObjectType[] = [];
 

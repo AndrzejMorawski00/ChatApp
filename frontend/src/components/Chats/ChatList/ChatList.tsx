@@ -10,7 +10,7 @@ const ChatList = ({ listName, chats }: Props) => {
     return (
         <div>
             <h2>{listName}</h2>
-            <ul>
+            <ul className="flex flex-col gap-1">
                 {chats.map((chat) => (
                     <Chat chat={chat} key={chat.id} />
                 ))}

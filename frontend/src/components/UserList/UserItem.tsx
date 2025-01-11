@@ -8,9 +8,10 @@ const ADD_FRIEND_ACTION = "AddFriend"
 
 interface Props {
     user: UserData;
+    searchBarValue : string,
 }
 
-const UserItem = ({ user }: Props) => {
+const UserItem = ({ user, searchBarValue }: Props) => {
     const { handleSignalRAction } = useSignalRAction();
     return (
         <li className="flex gap-2">

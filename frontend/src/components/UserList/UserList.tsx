@@ -41,7 +41,7 @@ const UserList = ({}: Props) => {
     return (
         <ul>
             {usersData.map((user, idx) => (
-                <UserItem key={idx} user={user} />
+                <UserItem key={idx} user={user} searchBarValue={searchBarValue} />
             ))}
         </ul>
     );

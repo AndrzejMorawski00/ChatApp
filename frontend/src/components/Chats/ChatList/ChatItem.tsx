@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { ChatObjectType } from "../../../types/Chats";
+import ChatActions from "../ChatActions/ChatActions";
 
 
 
@@ -11,8 +12,11 @@ interface Props {
 const Chat = ({chat} : Props) => {
 
 
-    return <Link to={`${chat.id}`}>
+    return <div>
+        <Link to={`${chat.id}`}>
         {chat.chatName}
     </Link>
+    <ChatActions chat={chat}/>
+    </div>
 }
 export default Chat

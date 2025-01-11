@@ -13,8 +13,6 @@ interface Props {
 const SignalRContextProvider = ({ children }: Props) => {
     const token = localStorage.getItem(ACCESS_TOKEN) || "";
 
-    
-
     return (
         <SignalRContext.Provider
             connectEnabled={!!token}
@@ -28,3 +26,4 @@ const SignalRContextProvider = ({ children }: Props) => {
 };
 
 export default SignalRContextProvider;
+// recoil

@@ -13,7 +13,7 @@ const JOIN_GROUP_ACTION = "JoinGroup";
 
 interface Props {}
 
-type RouteParams = {
+export type RouteParams = {
     chatID: string;
 };
 

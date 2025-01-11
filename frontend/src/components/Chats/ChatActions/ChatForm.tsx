@@ -1,23 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFriendsActions } from "../../../api/friends/useFriendsActions";
 import { UserData } from "../../../types/Users";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faX } from "@fortawesome/free-solid-svg-icons";
 import { isValidChatForm } from "../../../utils/chatForm/isValidChatForm";
-import useNewChatMutation from "../../../api/chats/useNewChatMutation";
+import useSignalRAction from "../../../api/signalR/signalRActions";
+import { ChatObjectType } from "../../../types/Chats";
 
 const MAX_DISPLAY_FRIENDS = 5;
-
+const CREATE_NEW_CHAT_ACTION = "CreateNewChat";
+const EDIT_CHAT_ACTION = "EditChat";
 interface Props {
     handleOpenChange: (newValue: boolean) => void;
+    currentChat?: ChatObjectType;
 }
 
-const NewChatForm = ({ handleOpenChange }: Props) => {
+const ChatForm = ({ handleOpenChange, currentChat }: Props) => {
     const [chatName, setChatName] = useState<string>("");
     const [searchFilter, setSearch] = useState<string>("");
     const [participants, setParticipants] = useState<number[]>([]);
     const { friendshipData, isLoadingFriends, isErrorFriends } = useFriendsActions();
-    const newChatMutation = useNewChatMutation();
+    const { handleSignalRAction } = useSignalRAction();
 
     const handleParticipantsChange = (action: "add" | "remove", userID: number): void => {
         switch (action) {
@@ -38,15 +41,22 @@ const NewChatForm = ({ handleOpenChange }: Props) => {
 
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
-        if (isValidChatForm(chatName, participants)) {
-            await newChatMutation.mutateAsync({ chatName: chatName, participantsID: participants });
+        if (isValidChatForm(chatName, participants) && !currentChat) {
+            handleSignalRAction(CREATE_NEW_CHAT_ACTION, { chatName: chatName, ParticipantsID: participants });
+        } else if (isValidChatForm(chatName, participants) && currentChat) {
+            handleSignalRAction(EDIT_CHAT_ACTION, {
+                chatID: currentChat.id,
+                chatName: chatName,
+                ParticipantsID: participants,
+            });
         }
         handleOpenChange(false);
     };
 
-    let acceptedFriends: UserData[] = friendshipData.accepted
-        .map((f) => (f.isSender ? f.receiverData : f.senderData))
-        .filter((f) => searchFilter === "" || f.firstName.includes(searchFilter) || f.lastName.includes(searchFilter));
+    useEffect(() => {
+        const participants = currentChat ? currentChat.chatParticipants : [];
+        setChatName(currentChat ? currentChat.chatName : ""), setParticipants(participants.map((p) => p.id));
+    }, [currentChat]);
 
     if (isLoadingFriends) {
         return (
@@ -59,10 +69,14 @@ const NewChatForm = ({ handleOpenChange }: Props) => {
     if (isErrorFriends) {
         return (
             <div>
-                <p>Loading...</p>
+                <p>Error..</p>
             </div>
         );
     }
+
+    const acceptedFriends: UserData[] = friendshipData.accepted
+        .map((f) => (f.isSender ? f.receiverData : f.senderData))
+        .filter((f) => searchFilter === "" || f.firstName.includes(searchFilter) || f.lastName.includes(searchFilter));
 
     return (
         <form
@@ -70,7 +84,7 @@ const NewChatForm = ({ handleOpenChange }: Props) => {
             onSubmit={(e) => {
                 handleFormSubmit(e);
             }}
-            className="flex gap-2"
+            className="flex gap-2 h-[50vh]"
         >
             <div>
                 <label htmlFor="chatName">Chat Name:</label>
@@ -90,11 +104,11 @@ const NewChatForm = ({ handleOpenChange }: Props) => {
                     value={searchFilter}
                     onChange={(e) => handleSearchFilterChange(e.target.value)}
                 />
-                <ul>
+                <ul className="h-fit max-h-20 overflow-y-scroll">
                     {acceptedFriends.slice(0, MAX_DISPLAY_FRIENDS).map((f) => (
                         <li key={f.id} className="flex gap-2">
                             <div className="flex gap-2">
-                                <p>{f.firstName}</p> <p>{f.lastName}</p>
+                                <p className="text-3xl">{f.firstName} {f.lastName}</p>
                             </div>
                             <div>
                                 {participants.includes(f.id) ? (
@@ -111,7 +125,7 @@ const NewChatForm = ({ handleOpenChange }: Props) => {
                     ))}
                 </ul>
             </div>
-            <input type="submit" value="Create new chat" />
+            <input type="submit" value={currentChat ? "Save Changes" : "Create new chat"} />
             <button type="button" onClick={() => handleOpenChange(false)}>
                 Cancel
             </button>
@@ -119,4 +133,4 @@ const NewChatForm = ({ handleOpenChange }: Props) => {
     );
 };
 
-export default NewChatForm;
+export default ChatForm;

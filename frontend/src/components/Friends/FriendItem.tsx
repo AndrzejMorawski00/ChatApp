@@ -21,11 +21,12 @@ const getActions = (
     friendship: FriendData,
     actions: (typeof FRIEND_COLUMNS)[keyof typeof FRIEND_COLUMNS]
 ): ReactNode => {
+
     switch (actions) {
         case FRIEND_COLUMNS.accepted:
             return (
                 <div>
-                    <button onClick={async () => await invoke(REMOVE_FRIEND_ACTION, friendship.id)}>
+                    <button onClick={async () => (console.log(friendship),await invoke(REMOVE_FRIEND_ACTION,friendship.id))}>
                         {REMOVE_FRIEND_TEXT}
                     </button>
                 </div>
@@ -44,7 +45,7 @@ const getActions = (
         case FRIEND_COLUMNS.sent:
             return (
                 <div>
-                    <button onClick={async () => await invoke(ACCEPT_FRIEND_ACTION, friendship.id)}>
+                    <button onClick={async () => await invoke(REMOVE_FRIEND_ACTION, friendship.id)}>
                         {CANCEL_FRIEND_TEXT}
                     </button>
                 </div>

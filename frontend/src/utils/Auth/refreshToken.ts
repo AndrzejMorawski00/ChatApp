@@ -14,6 +14,7 @@ export const refreshToken = async (): Promise<boolean> => {
             return true;
         } catch (error) {
             console.error(`${REFRESH_TOKEN_ERROR_MESSAGE}. ${error}`);
+            localStorage.clear();
             return false;
         }
     }

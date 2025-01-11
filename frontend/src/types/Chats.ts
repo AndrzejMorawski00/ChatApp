@@ -3,11 +3,10 @@ import { ChatCategory } from "./enums";
 export type ChatObjectType = {
     id: number;
     chatType: ChatCategory;
-
     chatName: string;
-
     owner: number;
-    participants: ChatParticipantType[];
+    isOwner : boolean;
+    chatParticipants: ChatParticipantType[];
 };
 
 export type NewChatType = {
@@ -15,6 +14,11 @@ export type NewChatType = {
     participantsID: number[];
 };
 
+
+export type ChatDeletedResponse = {
+    chatID : number,
+    userChatList: ChatObjectType[],
+}
 
 
 export type ChatParticipantType = {
