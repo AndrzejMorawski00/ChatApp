@@ -45,7 +45,7 @@ namespace ChatAppASPNET.DBContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Friend>()
-                .HasOne(f => f.Reciever)
+                .HasOne(f => f.Receiver)
                 .WithMany()
                 .HasForeignKey(f => f.ReceiverID)
                 .OnDelete(DeleteBehavior.Restrict);

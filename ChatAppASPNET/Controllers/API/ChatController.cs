@@ -9,6 +9,8 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using ChatAppASPNET.Models.API;
 
+using static ChatAppASPNET.Utils;
+
 namespace ChatAppASPNET.Controllers.API
 {
     [ApiController]
@@ -36,20 +38,8 @@ namespace ChatAppASPNET.Controllers.API
                 return BadRequest("Failed to fetch user");
             }
 
-            var userChats = await _dbContext.Chats.Where(c => c.Participants.Any(p => p.UserID == user.ID)).Select(c => new ChatModel
-            {
-                ID = c.ID,
-                ChatType = c.ChatType,
-                ChatName = c.ChatName,
-                Owner = c.Owner,
-                ChatParticipants = c.Participants.Select(p => new ChatParticipantModel
-                {
-                    ID = p.ID,
-                    FirstName = p.User.FirstName,
-                    LastName = p.User.LastName,
+            var userChats = await UserChatList(_dbContext, user);
 
-                }).ToList()
-            }).ToListAsync();
             return Ok(userChats);
         }
 

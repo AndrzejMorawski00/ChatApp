@@ -6,12 +6,14 @@ namespace ChatAppASPNET.Models.API
     {
         public int ID { get; set; }
 
-        public ChatType ChatType { get; set; }
+        public int ChatType { get; set; }
 
         public string ChatName { get; set; } = string.Empty;
 
         public int Owner { get; set; }
 
-        public ICollection<ChatParticipantModel> ChatParticipants = new List<ChatParticipantModel>();
+        public bool IsOwner { get; set; }
+
+        public ICollection<ChatParticipantModel> ChatParticipants { get; set; } = new List<ChatParticipantModel>();
     }
 }

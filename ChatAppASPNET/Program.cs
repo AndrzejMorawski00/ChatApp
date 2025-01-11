@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ChatAppASPNET.DBContext;
 using ChatAppASPNET.Hubs;
+using System.Text.Json.Serialization;
 
 
 
@@ -25,6 +26,11 @@ namespace ChatAppASPNET
             // Add services to the container.
             builder.Services.AddSignalR();
             builder.Services.AddControllers();
+                //.AddJsonOptions(options =>
+                //{
+                //    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                //    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                //});
             builder.Services.AddControllersWithViews();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

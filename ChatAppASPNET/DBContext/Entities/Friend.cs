@@ -22,7 +22,7 @@ namespace ChatAppASPNET.DBContext.Entities
 
         public  UserData Sender { get; set; }
 
-        public UserData Reciever { get; set; }
+        public UserData Receiver { get; set; }
 
     }
 
