@@ -8,7 +8,7 @@ import Home from "../routes/Home/Home";
 import Friends from "../routes/Friends/Friends";
 import SignalRContextProvider from "./SignalRContextProvider";
 import Chats from "../routes/Chats/Chats";
-import ChatDetails from "../components/Chats/ChatDetails";
+import Converstation from "../components/Chats/Conversation/Converstion";
 
 const router = createBrowserRouter([
     {
@@ -37,7 +37,7 @@ const router = createBrowserRouter([
                                 children: [
                                     {
                                         path: ":chatID",
-                                        element: <ChatDetails />,
+                                        element: <Converstation />,
                                     },
                                 ],
                             },

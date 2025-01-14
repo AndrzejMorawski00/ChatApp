@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import useAppContext from "../../hooks/useAppContextHook";
+import ThemeSwitch from "../ThemeSwitch/ThemeSwitch";
 
 // Constants
 const LOGOUT_PATH = "logout/";
@@ -9,11 +10,12 @@ const Header = () => {
     const { isAuthenticated } = useAppContext();
 
     return (
-        <header>
-            <h1>ChatApp</h1>
+        <header className="flex w-full items-center justify-end pr-4 min-h-20">
+            <ThemeSwitch/>
+            <h1 className="text-3xl text-textColor mr-4 font-montserrat tracking-wider">ChatApp</h1>
             {isAuthenticated && (
                 <div>
-                    <Link to={LOGOUT_PATH}>{LOGOUT_TEXT}</Link>
+                    <Link className="text-3xl text-textColor mr-4 font-montserrat tracking-wider linkStyles" to={LOGOUT_PATH}>{LOGOUT_TEXT}</Link>
                 </div>
             )}
         </header>
@@ -21,3 +23,5 @@ const Header = () => {
 };
 
 export default Header;
+
+

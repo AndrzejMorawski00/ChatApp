@@ -39,7 +39,7 @@ const UserList = ({}: Props) => {
 
     const usersData: UserData[] = data ? data : [];
     return (
-        <ul>
+        <ul className="flex flex-col gap-2 mt-4 pr-2">
             {usersData.map((user, idx) => (
                 <UserItem key={idx} user={user} searchBarValue={searchBarValue} />
             ))}

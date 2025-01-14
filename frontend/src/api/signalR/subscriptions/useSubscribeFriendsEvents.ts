@@ -1,18 +1,24 @@
 import { useQueryClient } from "@tanstack/react-query";
 import useAppContext from "../../../hooks/useAppContextHook";
 import { SignalRContext } from "../../../providers/SignalRContextProvider";
-import { FriendAPIResponse} from "../../../types/Friends";
+import { FriendAPIResponse } from "../../../types/Friends";
 import { FriendshipRequestRecievedType } from "../../../types/siglalRSubscriptions";
 
 // Constants
 const FRIENDSHIP_REQUEST_RECEIVED = "FriendshipRequestRecieved";
 const FRIENDSHIP_CANCELLED = "FriendshipCancelled";
 const FRIENDSHIP_ACCEPTED = "FriendshipAccepted";
+const MESSAGE_EVENT = "MessageEvent";
+
+export type NewMessage = {
+    message: string;
+    messageType: "info" | "error";
+};
 
 const useSubscribeUsersEvents = () => {
     const connection = SignalRContext;
     const queryClient = useQueryClient();
-    const { searchBarValue } = useAppContext();
+    const { searchBarValue, handleMessagesChange } = useAppContext();
 
     const friendsQueryKeys = ["users", "friends"];
     const usersQueryKeys = ["users", "potentialFirends", searchBarValue];
@@ -42,7 +48,7 @@ const useSubscribeUsersEvents = () => {
             FRIENDSHIP_ACCEPTED,
             (friendshipRequestModel: FriendAPIResponse) => {
                 // Friends
-                queryClient.setQueryData(friendsQueryKeys, () => friendshipRequestModel)
+                queryClient.setQueryData(friendsQueryKeys, () => friendshipRequestModel);
             },
             []
         );
@@ -62,6 +68,16 @@ const useSubscribeUsersEvents = () => {
                 );
                 //Friends
                 queryClient.setQueryData(friendsQueryKeys, () => friendships);
+            },
+            []
+        );
+
+        connection.useSignalREffect(
+            MESSAGE_EVENT,
+            (messageData: NewMessage) => {
+                console.log("API Message: ", messageData);
+                const error = { id: Date.now(), message: messageData.message, messageType: messageData.messageType };
+                handleMessagesChange(error);
             },
             []
         );

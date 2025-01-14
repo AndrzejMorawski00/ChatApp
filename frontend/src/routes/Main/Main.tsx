@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { ACCESS_TOKEN } from "../../constants/auth";
 import { refreshToken } from "../../utils/auth/refreshToken";
 import { isValidJWTToken } from "../../utils/auth/isValidJWTToken";
+import Header from "../../components/Header/Header";
 
 // Constants
 const HOME_PATH = "/home/";
@@ -43,11 +44,8 @@ const Main = () => {
         authenticate();
     }, [isAuthenticated]);
     return (
-        <div className="flex flex-col h-screen w-screen">
-            <header className="flex justify-end">
-                {isAuthenticated ? <Link to={HOME_PATH}>Chat App</Link> : <h1>Chat App</h1>}
-                {isAuthenticated && <MainLink destination={LOGOUT_PATH} buttonText={LOGOUT_TEXT} />}
-            </header>
+        <div className="flex flex-col h-screen w-screen bg-backgrouolor">
+            <Header/>
             {isAuthenticated ? (
                 <Outlet />
             ) : (

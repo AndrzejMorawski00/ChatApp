@@ -8,15 +8,17 @@ interface Props {
     buttonText : string,
     currentChat? : ChatObjectType
 
+    buttonStyles : string,
+
 }
 
-const NewChatModal = ({buttonText, currentChat} : Props) => {
+const NewChatModal = ({buttonText, currentChat, buttonStyles} : Props) => {
     const [open, setOpen] = useState<boolean>(false);
 
 
     return <ReusableModal open={open} onOpenChange={(newOpen) => setOpen(newOpen)}>
         <ReusableModal.Button asChild>
-            <button onClick={() => setOpen(true)}>
+            <button className={buttonStyles} onClick={() => setOpen(true)}>
                 {buttonText}
             </button>
         </ReusableModal.Button>

@@ -8,6 +8,7 @@ export type MessageType = {
 
 export type SenderDataType = {
     id : number,
+    isOwner : boolean
     firstName : string,
     lastName : string
 }

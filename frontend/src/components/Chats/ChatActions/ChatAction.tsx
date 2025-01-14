@@ -15,9 +15,19 @@ const ChatAction = ({ chatID, chatActionName, onOpenChange }: Props) => {
     };
 
     return (
-        <div>
-            <button onClick={handleChatAction}>Yes</button>
-            <button onClick={() => onOpenChange(false)}>No</button>
+        <div className="flex items-center justify-around">
+            <button
+                className="font-montserrat text-textColor bg-mainButtonBackground text-4xl px-3 mt-3 py-1 border-2 rounded-md transform duration-300 hover:scale-105"
+                onClick={handleChatAction}
+            >
+                Yes
+            </button>
+            <button
+                className="font-montserrat text-textColor bg-mainButtonBackground text-4xl px-3 mt-3 py-1 border-2 rounded-md transform duration-300 hover:scale-105"
+                onClick={() => onOpenChange(false)}
+            >
+                No
+            </button>
         </div>
     );
 };

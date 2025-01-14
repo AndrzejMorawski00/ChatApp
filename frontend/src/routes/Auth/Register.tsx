@@ -13,8 +13,7 @@ const INITIAL_REGISTER_FORM: RegisterFormType = {
     repeatPassword: "",
 };
 
-
-const LOGIN_PATH = "login/";
+const LOGIN_PATH = "/login/";
 const LOGIN_TEXT = "Login";
 
 const ERROR_MESSAGE = "Invalid key:";
@@ -44,60 +43,101 @@ const Register = () => {
     };
 
     return (
-        <div>
+        <div className="flex flex-col gap-1 items-center w-screen h-screen justify-center">
             <header>
-                <Link to={LOGIN_PATH}>{LOGIN_TEXT}</Link>
+                <h2 className="text-4xl text-textColor tracking-wider mb-4">Register User:</h2>
             </header>
-            <form action="" onSubmit={handleFormSubmit}>
-                <div>
-                    <label htmlFor="firstName">First Name:</label>
-                    <input
-                        type="text"
-                        id="firstName"
-                        value={formData.firstName}
-                        onChange={(e) => handleFormDataChange(e.target.id, e.target.value)}
-                    />
+            <form action="" onSubmit={handleFormSubmit} className="flex flex-col gap-2 mt-2">
+                <div className="flex flex-row gap-4">
+                    <div className="flex flex-col gap-2">
+                        {" "}
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="firstName" className="text-2xl tracking-wider text-textColor">
+                                First Name:
+                            </label>
+                            <input
+                                className="px-3 py-1 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                                type="text"
+                                id="firstName"
+                                value={formData.firstName}
+                                onChange={(e) => handleFormDataChange(e.target.id, e.target.value)}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="lastName" className="text-2xl tracking-wider text-textColor">
+                                Last Name:
+                            </label>
+                            <input
+                                className="px-3 py-1 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                                type="text"
+                                id="lastName"
+                                value={formData.lastName}
+                                onChange={(e) => handleFormDataChange(e.target.id, e.target.value)}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="email" className="text-2xl tracking-wider text-textColor">
+                                Email:
+                            </label>
+                            <input
+                                className="px-3 py-1 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                                type="email"
+                                id="email"
+                                value={formData.email}
+                                onChange={(e) => handleFormDataChange(e.target.id, e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        {" "}
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="password" className="text-2xl tracking-wider text-textColor">
+                                Password:
+                            </label>
+                            <input
+                                className="px-3 py-1 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                                type="password"
+                                id="password"
+                                value={formData.password}
+                                onChange={(e) => handleFormDataChange(e.target.id, e.target.value)}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="repeatPassword" className="text-2xl tracking-wider text-textColor">
+                                Repeat Password:
+                            </label>
+                            <input
+                                className="px-3 py-1 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor"
+                                value={formData.repeatPassword}
+                                type="password"
+                                id="repeatPassword"
+                                onChange={(e) => handleFormDataChange(e.target.id, e.target.value)}
+                            />
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label htmlFor="lastName">Last Name:</label>
-                    <input
-                        type="text"
-                        id="lastName"
-                        value={formData.lastName}
-                        onChange={(e) => handleFormDataChange(e.target.id, e.target.value)}
-                    />
+                <input
+                    type="submit"
+                    value="Register"
+                    className="font-montserrat text-textColor bg-mainButtonBackground text-4xl px-3 mt-4 py-1 border-2 rounded-md transform duration-300 hover:scale-105"
+                />
+                <div className="flex justify-center">
+                    <Link
+                        className="text-2xl w-fit text-center text-textColor mr-4 font-montserrat tracking-wider linkStyles"
+                        to={LOGIN_PATH}
+                    >
+                        {LOGIN_TEXT}
+                    </Link>
                 </div>
-                <div>
-                    <label htmlFor="email">Email:</label>
-                    <input
-                        type="email"
-                        id="email"
-                        value={formData.email}
-                        onChange={(e) => handleFormDataChange(e.target.id, e.target.value)}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="password">Password:</label>
-                    <input
-                        type="password"
-                        id="password"
-                        value={formData.password}
-                        onChange={(e) => handleFormDataChange(e.target.id, e.target.value)}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="repeatPassword">Repeat Password:</label>
-                    <input
-                        value={formData.repeatPassword}
-                        type="password"
-                        id="repeatPassword"
-                        onChange={(e) => handleFormDataChange(e.target.id, e.target.value)}
-                    />
-                </div>
-                <input type="submit" value="Register" />
             </form>
-            {loading && <p>Loading...</p>}
-            {error && <p className="text-red-500">{error}</p>}
+            {loading && (
+                <p className="text-2xl font-montserrat text-mainButtonBackground animate-pulse mt-4">Loading...</p>
+            )}
+            {error && (
+                <p className="text-2xl font-montserrat text-red-600 bg-red-100 border-l-4 border-red-500 p-3 rounded-md mt-4">
+                    {error}
+                </p>
+            )}
         </div>
     );
 };

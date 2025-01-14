@@ -1,21 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+.dark {
+    --backgroundColor: 34, 21, 46, 255;
+    --textColor: 242, 242, 242, 255;
+    --mainButtonBackground: 66, 34, 97, 255;
+    --themeBackground: 43, 4, 54, 255;
+    --themeIcon: 209, 196, 10, 255;
+    --themeThumb: 150, 150, 150, 255;
+    --linkUnderlineHover: 200, 200, 200, 255;
+    --formInputBackgroundColor: 70, 11, 128, 255;
+    --formInputTextColor: 230, 213, 247, 255;
+    --iconColor: 242, 242, 242, 255;
+    --iconColorHover: 232, 232, 232, 255;
+    --ownerMessageBackground: 92, 47, 138, 255;
+    --guestMessageBackground: 50, 25, 80, 255; 
+    --ownerMessageText: 242, 242, 242, 255;
+    --guestMessageText: 230, 213, 247, 255; 
+    --ownerMessageContentText: 210, 190, 230, 255; 
+    --guestMessageContentText: 200, 180, 220, 255;
+}
 
-body {
-    background-color: rgb(175, 164, 164);
+
+
+.light {
+    --backgroundColor: 240, 240, 240, 255; /* Light gray background for a softer feel */
+    --textColor: 20, 20, 20, 255; /* Darker text for better readability */
+    --mainButtonBackground: 58, 91, 159, 255; /* Darker blue for buttons */
+    --themeBackground: 250, 250, 250, 255; /* Slightly off-white background for the theme */
+    --themeIcon: 28, 28, 28, 255; /* Darker icon color for more contrast */
+    --themeThumb: 130, 130, 130, 255; /* Darker thumb color */
+    --linkUnderlineHover: 40, 40, 40, 255; /* Darker hover color for link underlines */
+    --formInputBackgroundColor: 220, 220, 220, 255; /* Darker input background */
+    --formInputTextColor: 40, 40, 40, 255; /* Darker text in input fields */
+    --iconColor: 28, 28, 28, 255; /* Darker icon color */
+    --iconColorHover: 45, 45, 45, 255; /* Slightly darker hover icon color */
+    --ownerMessageBackground: 180, 200, 255, 255; /* Slightly darker blue for owner messages */
+    --guestMessageBackground: 210, 210, 210, 255; /* Darker gray for guest messages */
+    --ownerMessageText: 28, 28, 28, 255; /* Dark text for owner messages */
+    --guestMessageText: 50, 50, 50, 255; /* Darker text for guest messages */
+    --ownerMessageContentText: 50, 50, 50, 255; /* Darker content text for owner */
+    --guestMessageContentText: 70, 70, 70, 255; /* Darker content text for guest */
 }
 
 .DialogOverlay {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0,0,0, 0.8);
     position: fixed;
     inset: 0;
     animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .DialogContent {
-    @apply bg-slate-800;
+    @apply bg-backgroundColor;
     border-radius: 6px;
     box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px;
     position: fixed;
@@ -28,4 +66,36 @@ body {
     width: auto;
     padding: 25px;
     animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+@layer components {
+    .linkStyles {
+        position: relative;
+        text-decoration: none;
+        padding-bottom: 0.25rem;
+        letter-spacing: 0.05em;
+    }
+
+    .linkStyles::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        bottom: 0;
+        left: 0;
+        transform: scaleX(0);
+        transform-origin: top left;
+        transition: transform 0.3s ease-in;
+        @apply bg-linkUnderlineHover;
+    }
+
+    .linkStyles:hover::before {
+        transform: scaleX(1);
+    }
+
+    .activeLinkStyles::before {
+        transform: scaleX(1);
+        @apply bg-linkUnderlineHover;
+    }
 }

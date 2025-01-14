@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { SignalRContext } from "../../../providers/SignalRContextProvider";
 import { ChatDeletedResponse, ChatObjectType } from "../../../types/Chats";
 import { useNavigate, useParams } from "react-router";
-import { RouteParams } from "../../../components/Chats/ChatDetails";
+import { RouteParams } from "../../../components/Chats/Conversation/Converstion";
 
 
 // Constants

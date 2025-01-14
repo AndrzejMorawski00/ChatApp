@@ -8,9 +8,9 @@ interface Props {
 
 const ChatList = ({ listName, chats }: Props) => {
     return (
-        <div>
-            <h2>{listName}</h2>
-            <ul className="flex flex-col gap-1">
+        <div className="flex flex-col gap-2">
+            <h2 className="text-2xl text-textColor tracking-wider">{listName}:</h2>
+            <ul className="flex flex-col gap-3">
                 {chats.map((chat) => (
                     <Chat chat={chat} key={chat.id} />
                 ))}

@@ -1,16 +1,10 @@
-import { Outlet } from "react-router";
+import { useOutlet } from "react-router";
 import ChatContainer from "../../components/Chats/ChatContainer";
 
 const Chats = () => {
-    return (
-        <div className="flex gap-1">
-            <div className="w-25">
-            <Outlet />
-            </div>
-            <ChatContainer />
-            
-        </div>
-    );
+    const outlet = useOutlet();
+
+    return <>{outlet ? <div className="w-full">{outlet}</div> : <ChatContainer />}</>;
 };
 
 export default Chats;
