@@ -90,16 +90,19 @@ namespace ChatAppASPNET.Hubs
                 await Clients.Group(userEmail).SendAsync("FriendshipRequestRecieved", userResponse);
                 await Clients.Group(friendEmail).SendAsync("FriendshipRequestRecieved", friendResponse);
 
+                await NotifyUser(userEmail, "Friendship request sent.", "success");
+                await NotifyUser(friendEmail, "You have received a new friendship request.", "info");
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Something went wrong: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                await NotifyUserOnError(Context.User.FindFirst(ClaimTypes.Email)?.Value, ex);
             }
         }
 
-        public async Task AcceptFriend(int friendshipId)
+            public async Task AcceptFriend(int friendshipId)
         {
             try
             {
@@ -137,7 +140,7 @@ namespace ChatAppASPNET.Hubs
                 {
                     ChatType = ChatType.DM,
                     ChatName = $"{sender.FirstName} {receiver.FirstName}"
-                    
+
                 };
                 friendship.Status = FriendshipStatus.Accepted;
 
@@ -146,7 +149,7 @@ namespace ChatAppASPNET.Hubs
                 var p1 = new ChatParticipant
                 {
                     ChatID = newChat.ID,
-                    UserID = sender.ID,         
+                    UserID = sender.ID,
                 };
 
                 var p2 = new ChatParticipant
@@ -165,12 +168,17 @@ namespace ChatAppASPNET.Hubs
 
                 await Clients.Group(sender.Email).SendAsync("FriendshipAccepted", senderResponse);
                 await Clients.Group(receiver.Email).SendAsync("FriendshipAccepted", receiverResponse);
+
+                await NotifyUser(sender.Email, "Friendship request accepted!", "success");
+                await NotifyUser(receiver.Email, $"{sender.FirstName} accepted your friendship request!", "info");
+
             }
 
             catch (Exception ex)
             {
                 Console.WriteLine($"Something went wrong: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
             }
         }
 
@@ -191,7 +199,7 @@ namespace ChatAppASPNET.Hubs
                 {
                     throw new Exception("Failed to fetch user data");
                 }
-                // Czy takie includowanie jest okej?
+
                 var friendship = await _dbContext.Friends.Include(f => f.Sender).Include(f => f.Receiver).FirstOrDefaultAsync(f => f.ID == friendshipID);
 
                 if (friendship == null)
@@ -209,7 +217,6 @@ namespace ChatAppASPNET.Hubs
                 // Czy można to jakoś ładniej usunąć?
                 if (friendship.Status == FriendshipStatus.Accepted)
                 {
-                    // Remove Chats
                     var chat = await _dbContext.Chats.Include(c => c.Participants)
                             .FirstOrDefaultAsync(c => c.ChatType == ChatType.DM
                                                    && c.Participants.Any(p => p.UserID == user.ID)
@@ -234,12 +241,16 @@ namespace ChatAppASPNET.Hubs
                 await Clients.Group(userEmail).SendAsync("FriendshipCancelled", userResponse);
                 await Clients.Group(friend.Email).SendAsync("FriendshipCancelled", friendResponse);
 
+                await NotifyUser(userEmail, "Friendship cancelled successfully.", "info");
+                await NotifyUser(friend.Email, $"{user.FirstName} removed you as a friend.", "info");
+
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Something went wrong: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
             }
         }
 
@@ -261,6 +272,8 @@ namespace ChatAppASPNET.Hubs
                     throw new Exception("Invalid Data");
                 }
 
+                model.ParticipantsID.Add(user.ID);
+
                 var userIDSet = new HashSet<int>(model.ParticipantsID);
 
                 var users = await _dbContext.UserData.Where(u => userIDSet.Contains(u.ID)).ToListAsync();
@@ -276,7 +289,6 @@ namespace ChatAppASPNET.Hubs
                     };
 
                     _dbContext.Add(newChat);
-                    model.ParticipantsID.Add(user.ID);
                     var participants = users.Select(u => new ChatParticipant
                     {
                         ChatID = newChat.ID,
@@ -306,6 +318,7 @@ namespace ChatAppASPNET.Hubs
             {
                 Console.WriteLine($"Something went wrong: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
             }
         }
 
@@ -354,8 +367,8 @@ namespace ChatAppASPNET.Hubs
             {
                 Console.WriteLine($"Something went wrong: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
             }
-
         }
 
         public async Task DeleteChat(int chatID)
@@ -382,7 +395,7 @@ namespace ChatAppASPNET.Hubs
                 using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 try
                 {
-  
+
                     _dbContext.Messages.RemoveRange(messages);
                     _dbContext.ChatParticipants.RemoveRange(chatParticipants);
                     _dbContext.Chats.Remove(chat);
@@ -398,9 +411,10 @@ namespace ChatAppASPNET.Hubs
                 foreach (var u in users)
                 {
                     var userChatList = await UserChatList(_dbContext, u);
-                    await Clients.Group(u.Email).SendAsync("ChatDeleted", new {
-                        chatID= chat.ID,
-                        userChatList=  userChatList
+                    await Clients.Group(u.Email).SendAsync("ChatDeleted", new
+                    {
+                        chatID = chat.ID,
+                        userChatList = userChatList
                     });
 
                 }
@@ -409,6 +423,7 @@ namespace ChatAppASPNET.Hubs
             {
                 Console.WriteLine($"Something went wrong: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
             }
         }
 
@@ -450,12 +465,12 @@ namespace ChatAppASPNET.Hubs
 
                 using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 try
-                {   
+                {
                     var newParticipants = participantsToAdd.Select(id => new ChatParticipant { ChatID = chat.ID, UserID = id }).ToList();
                     if ((newParticipants.Count + currentParticipants.Count - participantsToRemove.Count) < MIN_CHAT_SIZE)
                     {
                         throw new Exception("Chat is too small");
-                    } 
+                    }
                     await _dbContext.ChatParticipants.AddRangeAsync(newParticipants);
 
                     var participantsToRemoveEntities = await _dbContext.ChatParticipants
@@ -482,9 +497,10 @@ namespace ChatAppASPNET.Hubs
                 foreach (var u in removedUsers)
                 {
                     var userChatList = await UserChatList(_dbContext, u);
-                    await Clients.Group(u.Email).SendAsync("UserRemoved", new {
+                    await Clients.Group(u.Email).SendAsync("UserRemoved", new
+                    {
                         chatID = chat.ID,
-                        userChatList= userChatList
+                        userChatList = userChatList
                     });
                 }
 
@@ -498,6 +514,7 @@ namespace ChatAppASPNET.Hubs
             {
                 Console.WriteLine($"Something went wrong: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
             }
         }
 
@@ -521,6 +538,7 @@ namespace ChatAppASPNET.Hubs
             {
                 Console.WriteLine($"Something went wrong: {ex.Message}");
                 Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
             }
 
         }
@@ -529,16 +547,16 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                var userEmail = Context?.User?.FindFirst(ClaimTypes.Email)?.Value;
-                if (string.IsNullOrEmpty(userEmail))
+                var authentication = await AuthenticateUser(Context, _dbContext);
+                if (!string.IsNullOrEmpty(authentication.ErrorMessage))
                 {
-                    throw new Exception("Failed to fetch user data.");
+                    throw new Exception(authentication.ErrorMessage);
                 }
+                var user = authentication.User;
 
-                var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == userEmail);
                 var chat = await _dbContext.Chats.FirstOrDefaultAsync(c => c.ID == model.ChatID);
 
-                if (user == null || chat is null)
+                if (chat is null)
                 {
                     throw new Exception("Failed to fetch data");
                 }
@@ -554,8 +572,82 @@ namespace ChatAppASPNET.Hubs
                 await _dbContext.AddAsync(newMessage);
                 await _dbContext.SaveChangesAsync();
 
+                var userMessageResponse = new ResponseMessageModel
+                {
+                    ID = newMessage.ID,
+                    ChatID = newMessage.ChatID,
+                    SendTime = newMessage.SentTime,
+                    SenderData = new SenderDataModel
+                    {
+                        IsOwner = true,
+                        ID = newMessage.SenderID,
+                        FirstName = newMessage.Sender.FirstName,
+                        LastName = newMessage.Sender.LastName
+                    },
+                    Content = newMessage.Content,
+                };
+
+                var groupMessageResponse = new ResponseMessageModel
+                {
+                    ID = newMessage.ID,
+                    ChatID = newMessage.ChatID,
+                    SendTime = newMessage.SentTime,
+                    SenderData = new SenderDataModel
+                    {
+                        IsOwner = false,
+                        ID = newMessage.SenderID,
+                        FirstName = newMessage.Sender.FirstName,
+                        LastName = newMessage.Sender.LastName
+                    },
+                    Content = newMessage.Content,
+                };
+
                 var groupName = $"{chat.ChatName}_{chat.ID}";
-                await Clients.Group(groupName).SendAsync("MessageSent");
+                await Clients.Group(user.Email).SendAsync("MessageSent", userMessageResponse);
+                await Clients.GroupExcept(groupName, Context.ConnectionId).SendAsync("MessageSent", groupMessageResponse);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Something went wrong: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
+            }
+        }
+
+        public async Task InvokeMessage(string userEmail, string message)
+        {
+            try
+            {
+                var authentication = await AuthenticateUser(Context, _dbContext);
+                if (!string.IsNullOrEmpty(authentication.ErrorMessage))
+                {
+                    throw new Exception(authentication.ErrorMessage);
+                }
+
+                var user = authentication.User;
+                // Predefined list of random error messages
+                var errorMessages = new List<string>
+                    {
+                        "An unexpected error occurred. Please try again later.",
+                        "The server encountered an issue. Contact support if it persists.",
+                        "Unable to process your request at the moment.",
+                        "Something went wrong. Refresh and try again.",
+                        "An error happened, but we don't know why. Sorry!"
+                    };
+
+                // Generate a random message
+                var random = new Random();
+                var randomMessage = errorMessages[random.Next(errorMessages.Count)];
+
+                // Send the random error message to the client
+                await Clients.Group(user.Email).SendAsync("MessageEvent", new
+                {
+                    Message = randomMessage,
+                    MessageType = "info"
+                });
+
+
             }
             catch (Exception ex)
             {
@@ -564,6 +656,36 @@ namespace ChatAppASPNET.Hubs
             }
         }
 
+        private async Task NotifyUserOnError(string userEmail, Exception exception)
+        {
+            var errorMessage = string.IsNullOrEmpty(exception.Message)
+                ? "Something went wrong. Please try again later."
+                : exception.Message;
+            await NotifyUser(userEmail, errorMessage, "error");
+        }
+
+        private async Task NotifyUser(string userEmail, string message, string messageType = "info")
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    Console.WriteLine("Failed to get user email for notification.");
+                    return;
+                }
+
+                await Clients.Group(userEmail).SendAsync("MessageEvent", new
+                {
+                    Message = message,
+                    MessageType = messageType
+                });
+            }
+            catch (Exception notifyEx)
+            {
+                Console.WriteLine($"Failed to send message to user: {notifyEx.Message}");
+                Console.WriteLine($"Stack Trace: {notifyEx.StackTrace}");
+            }
+        }
 
         public override Task OnDisconnectedAsync(Exception? exception)
         {
