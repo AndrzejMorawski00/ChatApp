@@ -11,6 +11,7 @@ const INITIAL_LOGIN_FORM: LoginFormType = {
     email: "",
     password: "",
 };
+
 const REGISTER_PATH = "/register/";
 const REGISTER_TEXT = "Register";
 
@@ -39,9 +40,9 @@ const Register = () => {
     };
 
     return (
-        <div className="flex flex-col gap-2 items-center w-screen h-screen justify-center">
+        <div className="flex flex-col items-center justify-center w-screen h-screen gap-2">
             <header>
-                <h2 className="text-4xl text-textColor tracking-wider mb-4">Login User:</h2>
+                <h2 className="mb-4 text-4xl tracking-wider text-textColor">Login User:</h2>
             </header>
             <form action="" onSubmit={handleFormSubmit} className="flex flex-col gap-2 mx-2 my-2">
                 <div className="flex flex-col gap-2">
@@ -49,7 +50,7 @@ const Register = () => {
                         Email:
                     </label>
                     <input
-                        className="px-3 py-2 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                        className="px-3 py-2 text-xl tracking-wider border-b-2 outline-none bg-formInputBackgroundColor text-formInputTextColor"
                         type="email"
                         id="email"
                         value={formData.email}
@@ -61,7 +62,7 @@ const Register = () => {
                         Password:
                     </label>
                     <input
-                        className="px-3 py-2 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                        className="px-3 py-2 text-xl tracking-wider border-b-2 outline-none bg-formInputBackgroundColor text-formInputTextColor"
                         type="password"
                         id="password"
                         value={formData.password}
@@ -72,22 +73,22 @@ const Register = () => {
                     type="submit"
                     value="Login"
                     disabled={loading}
-                    className="font-montserrat text-textColor bg-mainButtonBackground text-4xl px-3 mt-3 py-1 border-2 rounded-md transform duration-300 hover:scale-105"
+                    className="px-3 py-1 mt-3 text-4xl duration-300 transform border-2 rounded-md font-montserrat text-textColor bg-mainButtonBackground hover:scale-105"
                 />
             </form>
             <div>
                 <Link
-                    className="text-2xl text-textColor mr-4 font-montserrat tracking-wider linkStyles"
+                    className="mr-4 text-2xl tracking-wider text-textColor font-montserrat linkStyles"
                     to={REGISTER_PATH}
                 >
                     {REGISTER_TEXT}
                 </Link>
             </div>
             {loading && (
-                <p className="text-2xl font-montserrat text-mainButtonBackground animate-pulse mt-4">Loading...</p>
+                <p className="mt-4 text-2xl font-montserrat text-mainButtonBackground animate-pulse">Loading...</p>
             )}
             {error && (
-                <p className="text-2xl font-montserrat text-red-600  animate-pulse mt-4">
+                <p className="mt-4 text-2xl text-red-600 font-montserrat animate-pulse">
                     {error}
                 </p>
             )}

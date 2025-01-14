@@ -1,0 +1,1 @@
+export const API_MESSAGE_TYPE = ['info', 'error', 'success'] as const

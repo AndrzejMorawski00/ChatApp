@@ -43,9 +43,9 @@ const Register = () => {
     };
 
     return (
-        <div className="flex flex-col gap-1 items-center w-screen h-screen justify-center">
+        <div className="flex flex-col items-center justify-center w-screen h-screen gap-1">
             <header>
-                <h2 className="text-4xl text-textColor tracking-wider mb-4">Register User:</h2>
+                <h2 className="mb-4 text-4xl tracking-wider text-textColor">Register User:</h2>
             </header>
             <form action="" onSubmit={handleFormSubmit} className="flex flex-col gap-2 mt-2">
                 <div className="flex flex-row gap-4">
@@ -56,7 +56,7 @@ const Register = () => {
                                 First Name:
                             </label>
                             <input
-                                className="px-3 py-1 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                                className="px-3 py-1 text-xl tracking-wider border-b-2 outline-none bg-formInputBackgroundColor text-formInputTextColor"
                                 type="text"
                                 id="firstName"
                                 value={formData.firstName}
@@ -68,7 +68,7 @@ const Register = () => {
                                 Last Name:
                             </label>
                             <input
-                                className="px-3 py-1 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                                className="px-3 py-1 text-xl tracking-wider border-b-2 outline-none bg-formInputBackgroundColor text-formInputTextColor"
                                 type="text"
                                 id="lastName"
                                 value={formData.lastName}
@@ -80,7 +80,7 @@ const Register = () => {
                                 Email:
                             </label>
                             <input
-                                className="px-3 py-1 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                                className="px-3 py-1 text-xl tracking-wider border-b-2 outline-none bg-formInputBackgroundColor text-formInputTextColor"
                                 type="email"
                                 id="email"
                                 value={formData.email}
@@ -95,7 +95,7 @@ const Register = () => {
                                 Password:
                             </label>
                             <input
-                                className="px-3 py-1 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                                className="px-3 py-1 text-xl tracking-wider border-b-2 outline-none bg-formInputBackgroundColor text-formInputTextColor"
                                 type="password"
                                 id="password"
                                 value={formData.password}
@@ -107,7 +107,7 @@ const Register = () => {
                                 Repeat Password:
                             </label>
                             <input
-                                className="px-3 py-1 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor"
+                                className="px-3 py-1 text-xl border-b-2 outline-none bg-formInputBackgroundColor text-formInputTextColor"
                                 value={formData.repeatPassword}
                                 type="password"
                                 id="repeatPassword"
@@ -119,11 +119,11 @@ const Register = () => {
                 <input
                     type="submit"
                     value="Register"
-                    className="font-montserrat text-textColor bg-mainButtonBackground text-4xl px-3 mt-4 py-1 border-2 rounded-md transform duration-300 hover:scale-105"
+                    className="px-3 py-1 mt-4 text-4xl duration-300 transform border-2 rounded-md font-montserrat text-textColor bg-mainButtonBackground hover:scale-105"
                 />
                 <div className="flex justify-center">
                     <Link
-                        className="text-2xl w-fit text-center text-textColor mr-4 font-montserrat tracking-wider linkStyles"
+                        className="mr-4 text-2xl tracking-wider text-center w-fit text-textColor font-montserrat linkStyles"
                         to={LOGIN_PATH}
                     >
                         {LOGIN_TEXT}
@@ -131,10 +131,10 @@ const Register = () => {
                 </div>
             </form>
             {loading && (
-                <p className="text-2xl font-montserrat text-mainButtonBackground animate-pulse mt-4">Loading...</p>
+                <p className="mt-4 text-2xl font-montserrat text-mainButtonBackground animate-pulse">Loading...</p>
             )}
             {error && (
-                <p className="text-2xl font-montserrat text-red-600 bg-red-100 border-l-4 border-red-500 p-3 rounded-md mt-4">
+                <p className="p-3 mt-4 text-2xl text-red-600 bg-red-100 border-l-4 border-red-500 rounded-md font-montserrat">
                     {error}
                 </p>
             )}

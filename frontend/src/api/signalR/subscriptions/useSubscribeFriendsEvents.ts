@@ -1,14 +1,18 @@
 import { useQueryClient } from "@tanstack/react-query";
 import useAppContext from "../../../hooks/useAppContextHook";
 import { SignalRContext } from "../../../providers/SignalRContextProvider";
-import { FriendAPIResponse } from "../../../types/Friends";
-import { FriendshipRequestRecievedType } from "../../../types/siglalRSubscriptions";
+import { FriendshipAPIResponse } from "../../../types/Friends";
+import { FriendshipRequestRecieved } from "../../../types/siglalRSubscriptions";
+import {
+    FRIENDSHIP_ACCEPTED,
+    FRIENDSHIP_CANCELLED,
+    FRIENDSHIP_REQUEST_RECEIVED,
+    MESSAGE_EVENT,
+} from "../../../constants/signalRActions";
+import { UserData } from "../../../types/Users";
+import { ApiStatusMessage, NewApiStatusMessage } from "../../../types/ApiMessages";
 
 // Constants
-const FRIENDSHIP_REQUEST_RECEIVED = "FriendshipRequestRecieved";
-const FRIENDSHIP_CANCELLED = "FriendshipCancelled";
-const FRIENDSHIP_ACCEPTED = "FriendshipAccepted";
-const MESSAGE_EVENT = "MessageEvent";
 
 export type NewMessage = {
     message: string;
@@ -23,60 +27,53 @@ const useSubscribeUsersEvents = () => {
     const friendsQueryKeys = ["users", "friends"];
     const usersQueryKeys = ["users", "potentialFirends", searchBarValue];
 
+    const updateFriendsData = (friendships: FriendshipAPIResponse): void => {
+        queryClient.setQueryData(friendsQueryKeys, () => friendships);
+    };
+
+    const updateUsersData = (users: UserData[]): void => {
+        queryClient.setQueryData(usersQueryKeys, () => {
+            users.filter(
+                (u) =>
+                    searchBarValue !== "" || u.firstName.includes(searchBarValue) || u.lastName.includes(searchBarValue)
+            );
+        });
+    };
+
+    const handleFriendshipEvent = (data: FriendshipRequestRecieved): void => {
+        const { users, friendships } = data;
+        updateUsersData(users);
+        updateFriendsData(friendships);
+    };
+
     const subscribeToUserEvents = () => {
         connection.useSignalREffect(
             FRIENDSHIP_REQUEST_RECEIVED,
-            (friendshipResponseReceived: FriendshipRequestRecievedType) => {
-                const { users, friendships } = friendshipResponseReceived;
-
-                //Users
-                queryClient.setQueryData(usersQueryKeys, () =>
-                    users.filter(
-                        (u) =>
-                            searchBarValue !== "" ||
-                            u.firstName.includes(searchBarValue) ||
-                            u.lastName.includes(searchBarValue)
-                    )
-                );
-                //Friends
-                queryClient.setQueryData(friendsQueryKeys, () => friendships);
+            (friendshipResponseReceived: FriendshipRequestRecieved) => {
+                handleFriendshipEvent(friendshipResponseReceived);
             },
             []
         );
 
         connection.useSignalREffect(
             FRIENDSHIP_ACCEPTED,
-            (friendshipRequestModel: FriendAPIResponse) => {
-                // Friends
-                queryClient.setQueryData(friendsQueryKeys, () => friendshipRequestModel);
+            (friendshipRequestModel: FriendshipAPIResponse) => {
+                updateFriendsData(friendshipRequestModel);
             },
             []
         );
         connection.useSignalREffect(
             FRIENDSHIP_CANCELLED,
-            (friendshipResponseReceived: FriendshipRequestRecievedType) => {
-                const { users, friendships } = friendshipResponseReceived;
-
-                //Users
-                queryClient.setQueryData(usersQueryKeys, () =>
-                    users.filter(
-                        (u) =>
-                            searchBarValue !== "" ||
-                            u.firstName.includes(searchBarValue) ||
-                            u.lastName.includes(searchBarValue)
-                    )
-                );
-                //Friends
-                queryClient.setQueryData(friendsQueryKeys, () => friendships);
+            (friendshipResponseReceived: FriendshipRequestRecieved) => {
+                handleFriendshipEvent(friendshipResponseReceived);
             },
             []
         );
 
         connection.useSignalREffect(
             MESSAGE_EVENT,
-            (messageData: NewMessage) => {
-                console.log("API Message: ", messageData);
-                const error = { id: Date.now(), message: messageData.message, messageType: messageData.messageType };
+            (data: NewApiStatusMessage) => {
+                const error: ApiStatusMessage = { id: Date.now(), message: data.message, messageType: data.messageType };
                 handleMessagesChange(error);
             },
             []

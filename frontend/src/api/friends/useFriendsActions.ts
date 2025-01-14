@@ -1,8 +1,9 @@
-import { FriendAPIResponse } from "../../types/Friends";
+import { FRIENDS_API_ENDPOINT } from "../../constants/endpoints";
+import { FriendshipAPIResponse } from "../../types/Friends";
 import useGetRequest from "../useGetRequest/useGetRequest";
 
-const FRIENDS_API_ENDPOINT = "api/Friends";
-const INITIAL_FRIENDS_DATA: FriendAPIResponse = { accepted: [], sent: [], received: [] };
+
+const INITIAL_FRIENDS_DATA: FriendshipAPIResponse = { accepted: [], sent: [], received: [] };
 
 export const useFriendsActions = () => {
     const queryKeys: string[] = ["users", "friends"];
@@ -10,7 +11,7 @@ export const useFriendsActions = () => {
         data: friendshipData,
         isLoading: isLoadingFriends,
         isError: isErrorFriends,
-    } = useGetRequest<FriendAPIResponse>({
+    } = useGetRequest<FriendshipAPIResponse>({
         queryKeys: queryKeys,
         endpoint: FRIENDS_API_ENDPOINT,
         keepData: true,

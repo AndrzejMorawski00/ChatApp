@@ -1,9 +1,13 @@
 import * as Toast from "@radix-ui/react-toast";
 import { useState } from "react";
-import { MessageType } from "../../providers/AppContextProvider";
+import { ApiStatusMessage } from "../../types/ApiMessages";
+import { twMerge } from "tailwind-merge";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faX } from "@fortawesome/free-solid-svg-icons";
+import { getApiMessageBackgroundColor } from "../../utils/messages/getApiMessageBackgroundColor";
 
 interface Props {
-    message: MessageType;
+    message: ApiStatusMessage;
 }
 
 const MessageToast = ({ message }: Props) => {
@@ -13,28 +17,24 @@ const MessageToast = ({ message }: Props) => {
         setOpen(newOpen);
     };
 
+    const messageBackgroundColor = getApiMessageBackgroundColor(message.messageType);
+    const iconColor =
+        messageBackgroundColor === "bg-white" ? "text-alternateApiMessageIconColor" : "text-defaultApiMessageIconColor";
+
     return (
         <Toast.Root
-            className="bg-white rounded-md shadow-lg p-2 items-center animate-toast-slide-in"
+            className={twMerge("items-center p-2 rounded-md shadow-lg animate-toast-slide-in", messageBackgroundColor)}
             open={open}
             onOpenChange={(newOpen: boolean) => handleOpenChange(newOpen)}
         >
-            <Toast.Title
-                className={`${
-                    message.messageType === "info" ? "text-blue-700" : "text-red-600"
-                } "text-xl font-medium text-gray-900 mb-1  capitalize`}
-            >
-                {message.messageType}
-            </Toast.Title>
-            <Toast.Description className="text-gray-700 text-sm ml-2">{message.message}</Toast.Description>
-            <Toast.Action asChild className="" altText="Close">
-                <button
-                    className="text-red-500 hover:text-red-700 font-bold transform duration-300 hover:scale-105"
-                    onClick={() => handleOpenChange(false)}
-                >
-                    Close
-                </button>
-            </Toast.Action>
+            <div className="flex items-center justify-between gap-1 divide-x-[1px] divide-white/80">
+                <Toast.Description className="ml-2 text-sm text-textColor">{message.message}</Toast.Description>
+                <Toast.Action asChild className="" altText="Close">
+                    <button className={twMerge("p-2 font-bold", iconColor)} onClick={() => handleOpenChange(false)}>
+                        <FontAwesomeIcon icon={faX} className="duration-300 transform hover:scale-110" />
+                    </button>
+                </Toast.Action>
+            </div>
         </Toast.Root>
     );
 };

@@ -1,12 +1,9 @@
 import { useState } from "react";
 import useSignalRAction from "../../api/signalR/signalRActions";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { SEND_MESSAGE_ACTION } from "../../constants/signalRActions";
 
-// Constants
-const SEND_MESSAGE_ACTION = "SendMessage";
 
 interface Props {
     chatID: number;
@@ -29,17 +26,17 @@ const NewMessageForm = ({ chatID }: Props) => {
     return (
         <form
             onSubmit={(e) => handleFormSubmit(e)}
-            className="flex flex-row items-center border-b-2 bg-formInputBackgroundColor py-1 pr-2"
+            className="flex flex-row items-center py-1 pr-2 border-b-2 bg-formInputBackgroundColor"
         >
             <input
-                className="flex-grow bg-formInputBackgroundColor text-xl text-formInputTextColor outline-none px-2 py-1"
+                className="flex-grow px-2 py-1 text-xl outline-none bg-formInputBackgroundColor text-formInputTextColor"
                 type="text"
                 name="message"
                 id="message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
             />
-            <button type="submit" className="text-iconColor px-2">
+            <button type="submit" className="px-2 text-iconColor">
                 <FontAwesomeIcon
                     icon={faArrowRight}
                     className="text-lg duration-300 transform hover:text-iconColorHover"

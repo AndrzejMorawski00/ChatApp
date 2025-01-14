@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { NewChatType } from "../../types/Chats";
 import { createNewChat } from "../../utils/api/createChat";
+import { NewChatRequest } from "../../types/Chats";
 
 // Constants
 const NEW_CHAT_ERROR_MESSAGE = "Failed to create a new chat";
@@ -10,7 +10,7 @@ const useNewChatMutation = () => {
     const queryClient = useQueryClient();
     const chatQueryKeys = ["userChats"];
     return useMutation({
-        mutationFn: (chatData: NewChatType) => createNewChat(chatData),
+        mutationFn: (chatData: NewChatRequest ) => createNewChat(chatData),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: chatQueryKeys });
         },

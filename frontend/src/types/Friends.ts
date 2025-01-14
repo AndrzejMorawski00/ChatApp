@@ -1,3 +1,4 @@
+import { FRIEND_COLUMNS } from "../constants/Friends";
 import { FriendshipStatus } from "./enums";
 import { UserData } from "./Users";
 
@@ -11,7 +12,7 @@ export type Friendship = {
     status: FriendshipStatus;
 };
 
-export type FriendAPIResponse = {
+export type FriendshipAPIResponse = {
     accepted: Friendship[];
     sent: Friendship[];
     received: Friendship[];
@@ -21,3 +22,5 @@ export type FriendData = {
     id: number;
     userData: UserData;
 };
+
+export type FriendColumnNames = (typeof FRIEND_COLUMNS)[keyof typeof FRIEND_COLUMNS]

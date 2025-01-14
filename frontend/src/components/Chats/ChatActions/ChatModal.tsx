@@ -1,12 +1,11 @@
 import { useState } from "react"
 import ReusableModal from "../../ReusableComponents/Modal/ReusableModal";
-import ChatForm from "./ChatForm";
-import { ChatObjectType } from "../../../types/Chats";
+import ChatForm from "../ChatForm/ChatForm";
+import { ChatData } from "../../../types/Chats";
 
-// Constants 
 interface Props {
     buttonText : string,
-    currentChat? : ChatObjectType
+    currentChat? : ChatData
 
     buttonStyles : string,
 

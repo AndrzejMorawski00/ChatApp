@@ -1,28 +1,34 @@
 import { ChatCategory } from "./enums";
 
-export type ChatObjectType = {
+export type ChatData = {
     id: number;
     chatType: ChatCategory;
     chatName: string;
     owner: number;
     isOwner : boolean;
-    chatParticipants: ChatParticipantType[];
+    chatParticipants: ChatParticipant[];
 };
 
-export type NewChatType = {
+export type NewChatRequest = {
     chatName: string;
     participantsID: number[];
 };
 
 
-export type ChatDeletedResponse = {
+export type ChatDeletionResponse = {
     chatID : number,
-    userChatList: ChatObjectType[],
+    userChatList: ChatData[],
 }
 
 
-export type ChatParticipantType = {
+export type ChatParticipant = {
     id: number;
     firstName: string;
     lastName: string;
+};
+
+
+
+export type ChatRouteParams = {
+    chatID: string;
 };

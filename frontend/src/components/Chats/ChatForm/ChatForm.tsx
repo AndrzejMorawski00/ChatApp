@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
 import { useFriendsActions } from "../../../api/friends/useFriendsActions";
 import { UserData } from "../../../types/Users";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faX } from "@fortawesome/free-solid-svg-icons";
 import { isValidChatForm } from "../../../utils/chatForm/isValidChatForm";
 import useSignalRAction from "../../../api/signalR/signalRActions";
-import { ChatObjectType } from "../../../types/Chats";
+import { ChatData } from "../../../types/Chats";
+import { CREATE_NEW_CHAT_ACTION, EDIT_CHAT_ACTION } from "../../../constants/signalRActions";
+import ChatParticipantList from "./ChatParticipantList";
 
-const CREATE_NEW_CHAT_ACTION = "CreateNewChat";
-const EDIT_CHAT_ACTION = "EditChat";
 interface Props {
     handleOpenChange: (newValue: boolean) => void;
-    currentChat?: ChatObjectType;
+    currentChat?: ChatData;
 }
 
 const ChatForm = ({ handleOpenChange, currentChat }: Props) => {
@@ -59,16 +57,16 @@ const ChatForm = ({ handleOpenChange, currentChat }: Props) => {
 
     if (isLoadingFriends) {
         return (
-            <div className="w-full h-full flex items-center justify-center border-l-2 border-l-white/30 pl-4 pt-4">
-                <p className="text-2xl font-montserrat text-mainButtonBackground animate-pulse mt-4">Loading...</p>
+            <div className="flex items-center justify-center w-full h-full pt-4 pl-4 border-l-2 border-l-white/30">
+                <p className="mt-4 text-2xl font-montserrat text-mainButtonBackground animate-pulse">Loading...</p>
             </div>
         );
     }
 
     if (isErrorFriends) {
         return (
-            <div className="w-full h-full flex items-center justify-center border-l-2 border-l-white/30 pl-4 pt-4">
-                <p className="text-2xl font-montserrat text-red-600  animate-pulse mt-4">Error...</p>
+            <div className="flex items-center justify-center w-full h-full pt-4 pl-4 border-l-2 border-l-white/30">
+                <p className="mt-4 text-2xl text-red-600 font-montserrat animate-pulse">Error...</p>
             </div>
         );
     }
@@ -87,12 +85,12 @@ const ChatForm = ({ handleOpenChange, currentChat }: Props) => {
         >
             <div className="flex gap-4">
                 <div className="flex flex-col gap-2">
-                    <label htmlFor="chatName" className="text-xl text-textColor tracking-wider">
+                    <label htmlFor="chatName" className="text-xl tracking-wider text-textColor">
                         Chat Name:
                     </label>
                     <input
                         type="text"
-                        className="px-3 py-2 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                        className="px-3 py-2 text-xl tracking-wider border-b-2 outline-none bg-formInputBackgroundColor text-formInputTextColor"
                         name="chatName"
                         id="chatName"
                         value={chatName}
@@ -100,56 +98,32 @@ const ChatForm = ({ handleOpenChange, currentChat }: Props) => {
                     />
                 </div>
                 <div className="flex flex-col gap-2">
-                    <label htmlFor="filter" className="text-xl text-textColor tracking-wider">
+                    <label htmlFor="filter" className="text-xl tracking-wider text-textColor">
                         Filter:
                     </label>
                     <input
                         type="text"
-                        className="px-3 py-2 text-xl outline-none border-b-2 bg-formInputBackgroundColor text-formInputTextColor tracking-wider"
+                        className="px-3 py-2 text-xl tracking-wider border-b-2 outline-none bg-formInputBackgroundColor text-formInputTextColor"
                         name="filter"
                         id="filter"
                         value={searchFilter}
                         onChange={(e) => handleSearchFilterChange(e.target.value)}
                     />
-                    <ul className="overflow-y-auto flex flex-col gap-2 min-h-[30vh]">
-                        {acceptedFriends.map((f) => (
-                            <li key={f.id} className="flex gap-2 justify-between">
-                                <div className="flex gap-2">
-                                    <p className="text-xl text-textColor">{f.firstName}</p>
-                                    <p className="text-xl text-textColor">{f.lastName}</p>
-                                </div>
-                                <div>
-                                    {participants.includes(f.id) ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleParticipantsChange("remove", f.id)}
-                                            className="text-2xl text-iconColor hover:text-iconColorHover transform transition duration-300 hover:scale-105"
-                                        >
-                                            <FontAwesomeIcon icon={faX} />
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleParticipantsChange("add", f.id)}
-                                            className="text-2xl text-iconColor hover:text-iconColorHover transform transition duration-300 hover:scale-105"
-                                        >
-                                            <FontAwesomeIcon icon={faCheck} />
-                                        </button>
-                                    )}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                    <ChatParticipantList
+                        friends={acceptedFriends}
+                        participants={participants}
+                        handleParticipantsChange={handleParticipantsChange}
+                    />
                 </div>
             </div>
             <div className="flex justify-center gap-10">
                 <input
-                    className="font-montserrat text-textColor bg-mainButtonBackground text-4xl px-3 mt-3 py-1 border-2 rounded-md transform duration-300 hover:scale-105"
+                    className="px-3 py-1 mt-3 text-4xl duration-300 transform border-2 rounded-md font-montserrat text-textColor bg-mainButtonBackground hover:scale-105"
                     type="submit"
                     value={currentChat ? "Save Changes" : "Create new chat"}
                 />
                 <button
-                    className="font-montserrat text-textColor bg-mainButtonBackground text-4xl px-3 mt-3 py-1 border-2 rounded-md transform duration-300 hover:scale-105"
+                    className="px-3 py-1 mt-3 text-4xl duration-300 transform border-2 rounded-md font-montserrat text-textColor bg-mainButtonBackground hover:scale-105"
                     type="button"
                     onClick={() => handleOpenChange(false)}
                 >

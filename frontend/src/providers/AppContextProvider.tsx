@@ -1,31 +1,9 @@
 import { createContext, ReactNode, useEffect, useState } from "react";
+import { ApiStatusMessage } from "../types/ApiMessages";
+import { AppContextType, ThemeColor } from "../types/AppContext";
 
+//
 const MESSAGE_TIMEOUT = 100000;
-
-export type MessageType = {
-    id: number;
-    message: string;
-    messageType: string;
-};
-
-export type AppContextType = {
-    theme: ThemeColor;
-    searchBarValue: string;
-    messages: MessageType[];
-    isAuthenticated: boolean;
-    currActiveChat: number | null;
-    handleMessagesChange: (errorMessage: MessageType) => void;
-    handleSearchBarValueStateChange: (newValue: string) => void;
-    handleCurrActiveChatChange: (newChatValue: number | null) => void;
-    handleAuthenticationStateChange: (authenticated: boolean) => void;
-    handleThemeChange: (newThemeValue: (typeof ThemeColors)[number]) => void;
-};
-
-
-export const ThemeColors = ["dark", "light"] as const;
-export type ThemeColor = (typeof ThemeColors)[number];
-
-
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 interface Props {
@@ -33,11 +11,27 @@ interface Props {
 }
 
 const AppContextProvider = ({ children }: Props) => {
-    const [theme, setTheme] = useState<ThemeColor>("dark")
+    const [theme, setTheme] = useState<ThemeColor>("dark");
     const [currActiveChat, setCurrActiveChat] = useState<number | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [searchBarValue, setSearchBarValue] = useState<string>("");
-    const [messages, setMessages] = useState<MessageType[]>([]);
+    const [messages, setMessages] = useState<ApiStatusMessage[]>([
+        {
+            id: Infinity,
+            messageType: "error",
+            message: "This is Error Message",
+        },
+        {
+            id: Infinity,
+            messageType: "success",
+            message: "This is Success Message",
+        },
+        {
+            id: Infinity,
+            messageType: "info",
+            message: "This is Info Message",
+        },
+    ]);
 
     const handleThemeChange = (newThemeValue: ThemeColor): void => {
         setTheme((prevValue) => {
@@ -73,7 +67,7 @@ const AppContextProvider = ({ children }: Props) => {
         setCurrActiveChat(newChatValue);
     };
 
-    const handleMessagesChange = (message: MessageType): void => {
+    const handleMessagesChange = (message: ApiStatusMessage): void => {
         setMessages((prevMessages) => [...prevMessages, message]),
             setTimeout(() => {
                 setMessages((prevMessages) => prevMessages.filter((m) => m.id !== message.id));

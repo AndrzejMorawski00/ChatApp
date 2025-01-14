@@ -3,9 +3,9 @@ import { useNavigate } from "react-router";
 import { LoginFormType, useLoginUserType } from "../../types/auth";
 import axiosInstance from "../../utils/api/apiConfig";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants/auth";
+import { API_AUTH_TOKEN_ENDPOINT } from "../../constants/endpoints";
 
 // Constants
-const API_AUTH_TOKEN_ENDPOINT = "api/auth/token";
 const LOGIN_FAILED_ERROR_MESSAGE = "Login Failed";
 const SUCCESSFUL_AUTH_REDIRECT_LINK = "/home/";
 

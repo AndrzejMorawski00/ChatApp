@@ -14,7 +14,7 @@ const ChatActionModal = ({ buttonText,chatActionName, chatId }: Props) => {
     return (
         <ReusableModal open={open} onOpenChange={(newOpen) => setOpen(newOpen)}>
             <ReusableModal.Button asChild>
-                <button className="text-xl text-textColor transform duration-300 hover:scale-105" onClick={() => setOpen(true)}>{buttonText}</button>
+                <button className="text-xl duration-300 transform text-textColor hover:scale-105" onClick={() => setOpen(true)}>{buttonText}</button>
             </ReusableModal.Button>
             <ReusableModal.Content title={buttonText}>
                 <ChatAction chatID={chatId} chatActionName={chatActionName} onOpenChange={(newValue : boolean) => setOpen(newValue)} />

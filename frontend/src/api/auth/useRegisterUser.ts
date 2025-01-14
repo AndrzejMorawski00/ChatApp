@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { RegisterFormType, useRegisterUserType } from "../../types/auth";
 import axiosInstance from "../../utils/api/apiConfig";
+import { API_REGISTER_ENDPOINT } from "../../constants/endpoints";
 
 // Constants
-const API_REGISTER_ENDPOINT = "api/auth/register";
 const SUCCESSFUL_REGISTER_REDIRECT_LINK = "/login/";
 const REGISTER_FAILED_ERROR_MESSAGE = "Failed to create an account";
 

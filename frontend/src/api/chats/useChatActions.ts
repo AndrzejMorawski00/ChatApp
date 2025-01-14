@@ -1,14 +1,13 @@
 import useGetRequest from "../useGetRequest/useGetRequest";
-import { ChatObjectType } from "../../types/Chats";
+import { CHAT_API_ENDPOINT } from "../../constants/endpoints";
+import { ChatData } from "../../types/Chats";
 
 // Constants
-const CHAT_API_ENDPOINT = "api/Chat";
-const INITIAL_CHAT_DATA: ChatObjectType[] = [];
-
+const INITIAL_CHAT_DATA: ChatData[] = [];
 
 const useChatActions = () => {
     const queryKeys: string[] = ["userChats"];
-    const { data, isLoading, isError } = useGetRequest<ChatObjectType[]>({
+    const { data, isLoading, isError } = useGetRequest<ChatData[]>({
         queryKeys: queryKeys,
         endpoint: CHAT_API_ENDPOINT,
         keepData: true,

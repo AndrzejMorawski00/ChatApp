@@ -11,19 +11,19 @@ interface Props {
     searchBarValue: string;
 }
 
-const UserItem = ({ user, searchBarValue }: Props) => {
+const UserItem = ({ user }: Props) => {
     const { handleSignalRAction } = useSignalRAction();
     return (
-        <li className="flex gap-2 justify-between items-center">
-            <div className="flex gap-4 items-center">
-                <p className="text-textColor text-xl tracking-wider py-1">{user.firstName}</p>
-                <p className="text-textColor text-xl tracking-wider py-1">{user.lastName}</p>
+        <li className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-4">
+                <p className="py-1 text-xl tracking-wider text-textColor">{user.firstName}</p>
+                <p className="py-1 text-xl tracking-wider text-textColor">{user.lastName}</p>
             </div>
 
             <button className="" onClick={async () => await handleSignalRAction(ADD_FRIEND_ACTION, user.email)}>
                 <FontAwesomeIcon
                     icon={faUserPlus}
-                    className="size-6 text-iconColor hover:text-iconColorHover transform transition duration-300 hover:scale-105"
+                    className="transition duration-300 transform size-6 text-iconColor hover:text-iconColorHover hover:scale-105"
                 />
             </button>
         </li>

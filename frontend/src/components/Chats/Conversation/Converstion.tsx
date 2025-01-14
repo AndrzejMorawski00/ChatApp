@@ -6,22 +6,17 @@ import NewMessageForm from "../NewMessageForm";
 import useGetInfiniteMessages from "../../../api/useGetInfiniteMessages.ts/useGetInfiniteMessages";
 import useAppContext from "../../../hooks/useAppContextHook";
 import useSignalRAction from "../../../api/signalR/signalRActions";
-import { MessageType } from "../../../types/messages";
 import { SignalRContext } from "../../../providers/SignalRContextProvider";
+import { JOIN_GROUP_ACTION, MESSAGE_RECEIVED } from "../../../constants/signalRActions";
+import { ChatMessage } from "../../../types/messages";
+import { ChatRouteParams } from "../../../types/Chats";
 
-// Constants
-const JOIN_GROUP_ACTION = "JoinGroup";
-const MESSAGE_RECEIVED = "MessageSent";
 interface Props {}
 
-export type RouteParams = {
-    chatID: string;
-};
-
 const Converstation = ({}: Props) => {
-    const params = useParams<RouteParams>();
+    const params = useParams<ChatRouteParams>();
     const chatID = parseInt(params.chatID || "", 10);
-    const [messages, setMessages] = useState<MessageType[]>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const connection = SignalRContext;
     const { handleSignalRAction } = useSignalRAction();
     const { handleCurrActiveChatChange } = useAppContext();
@@ -61,15 +56,17 @@ const Converstation = ({}: Props) => {
 
     connection.useSignalREffect(
         MESSAGE_RECEIVED,
-        (newMessage: MessageType) => {
+        (newMessage: ChatMessage) => {
             setMessages((prevMessages) => [newMessage, ...prevMessages]);
         },
         []
     );
 
+
+
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center mt-4">
+            <div className="flex items-center justify-center mt-4">
                 <p className="text-2xl font-montserrat text-mainButtonBackground animate-pulse">Loading...</p>
             </div>
         );
@@ -77,31 +74,31 @@ const Converstation = ({}: Props) => {
 
     if (isError) {
         return (
-            <div className="flex justify-center items-center mt-4">
-                <p className="text-2xl font-montserrat text-red-600 animate-pulse">Error...</p>
+            <div className="flex items-center justify-center mt-4">
+                <p className="text-2xl text-red-600 font-montserrat animate-pulse">Error...</p>
             </div>
         );
     }
 
     const ulContent =
         messages.length > 0 ? (
-            <ul className="overflow-y-auto max-h-[60vh] min-w-[400px] flex flex-col gap-2">
+            <ul className="overflow-y-auto max-h-[60vh] min-w-[400px] flex flex-col gap-2 px-4">
                 {messages.map((message) => (
                     <Message key={message.id} message={message} />
                 ))}
-                {isFetchNextPageError && <li className="text-white text-2xl">Something went wrong...</li>}
+                {isFetchNextPageError && <li className="text-2xl text-white">Something went wrong...</li>}
                 <li ref={ref} className="loading">
                     {isFetchingNextPage ? "Loading..." : ""}
                 </li>
             </ul>
         ) : (
-            <ul>
-                <li className="text-center text-xl text-textColor">There aren't any messages</li>
+            <ul className="overflow-y-auto max-h-[60vh] min-w-[400px] flex flex-col gap-2 px-4">
+                <li className="text-xl text-center text-textColor">There aren't any messages</li>
             </ul>
         );
 
     return (
-        <div className="flex w-full flex-col px-10 mt-4 gap-4">
+        <div className="flex flex-col w-full gap-4 px-10 pt-4 pl-4 border-l-2 border-l-white/30">
             <NewMessageForm chatID={chatID} />
             {ulContent}
         </div>

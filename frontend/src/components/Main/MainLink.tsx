@@ -8,7 +8,7 @@ interface Props {
 const MainLink = ({ destination, buttonText }: Props) => {
     return (
         <Link to={destination}>
-            <button className="font-montserrat text-textColor bg-mainButtonBackground text-4xl px-4 py-2 border-2 rounded-md transform duration-300 hover:scale-105">{buttonText}</button>
+            <button className="px-4 py-2 text-4xl duration-300 transform border-2 rounded-md font-montserrat text-textColor bg-mainButtonBackground hover:scale-105">{buttonText}</button>
         </Link>
     );
 };

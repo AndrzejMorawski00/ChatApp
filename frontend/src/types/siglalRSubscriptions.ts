@@ -1,12 +1,8 @@
-import { FriendAPIResponse } from "./Friends";
+import { FriendshipAPIResponse } from "./Friends";
 import { UserData } from "./Users";
 
-export type FriendshipRequestRecievedType = {
-    friendships: FriendAPIResponse;
+export type FriendshipRequestRecieved = {
+    friendships: FriendshipAPIResponse;
     users: UserData[];
 };
 
-
-export type UserAddedToChatType = {
-    
-}

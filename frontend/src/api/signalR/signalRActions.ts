@@ -1,11 +1,18 @@
 import { HubConnectionState } from "@microsoft/signalr";
 import { SignalRContext } from "../../providers/SignalRContextProvider";
+import { SignalRActionHandler } from "../../types/signalRActions";
+
+// Constants
+const INTERVAL_DELAY = 100;
+const TIMEOUT_DURATION = 10000;
+const TIMEOUT_ERROR_MESSAGE = "Connection not established within timeout";
+const ACTION_ERROR_MESSAGE = "Failed to perform SignalR action";
 
 const useSignalRAction = () => {
     const signalRContext = SignalRContext;
 
-    const handleSignalRAction = async (actionName: string, args?: any) => {
-        const waitForConnection = async () => {
+    const handleSignalRAction: SignalRActionHandler = async (actionName, args) => {
+        const waitForConnection = async (): Promise<void> => {
             if (signalRContext.connection?.state === HubConnectionState.Connected) {
                 return;
             }
@@ -16,13 +23,12 @@ const useSignalRAction = () => {
                         clearInterval(interval);
                         resolve();
                     }
-                }, 100);
+                }, INTERVAL_DELAY);
 
-               
                 setTimeout(() => {
                     clearInterval(interval);
-                    reject(new Error("Connection not established within timeout"));
-                }, 10000); 
+                    reject(new Error(TIMEOUT_ERROR_MESSAGE));
+                }, TIMEOUT_DURATION);
             });
         };
 
@@ -30,7 +36,7 @@ const useSignalRAction = () => {
             await waitForConnection();
             await signalRContext.connection?.invoke(actionName, args);
         } catch (error) {
-            console.error(`Failed to perform SignalR action "${actionName}":`, error);
+            console.error(`${ACTION_ERROR_MESSAGE} "${actionName}":`, error);
         }
     };
 

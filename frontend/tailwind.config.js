@@ -25,6 +25,11 @@ export default {
                 guestMessageText: "rgba(var(--guestMessageText))",
                 ownerMessageContentText: "rgba(var(--ownerMessageContentText))",
                 guestMessageContentText: "rgba(var(--guestMessageContentText))",
+                infoApiMessageBackground: "rgba(var(--infoApiMessageBackground))",
+                errorApiMessageBackground: "rgba(var(--errorApiMessageBackground))",
+                successApiMessageBackground: "rgba(var(--successApiMessageBackground))",
+                defaultApiMessageIconColor: "rgba(var(--defaultApiMessageIconColor))",
+                alternateApiMessageIconColor: "rgba(var(--alternateApiMessageIconColor))",
             },
             fontFamily: {
                 montserrat: ["Montserrat", "serif"],
