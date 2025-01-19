@@ -1,26 +1,24 @@
-﻿using ChatAppASPNET.DBContext;
-using ChatAppASPNET.DBContext.Entities;
-using ChatAppASPNET.Models.API;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Domain.UseCases.APIUseCases.Common;
+using Domain.UseCases.APIUseCases.Messages;
+using Infrastructure.DBContext;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ChatAppASPNET.Controllers.API
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class MessagesController : ControllerBase
     {
+        private readonly static int pageSize = 10;
         private readonly AppDBContext _dbContext;
-        private readonly int pageSize = 10;
+        private readonly IMediator _mediator;
 
-        public MessagesController(AppDBContext dbContext)
+        public MessagesController(AppDBContext dbContext, IMediator mediator)
         {
             _dbContext = dbContext;
+            _mediator = mediator;
         }
 
 
@@ -36,53 +34,16 @@ namespace ChatAppASPNET.Controllers.API
 
                 var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
 
-                var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == userEmail);
-                if (user == null)
-                {
-                    return NotFound("User data not found.");
-                }
+                var user = await _mediator.Send(new GetUserModelParameters() { UserEmail = userEmail });
+                
+                var messageResponse = await _mediator.Send(new GetMessageListParameters() { 
+                    ChatID = chatID,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    User = user.User,
+                });
 
-                var chat = await _dbContext.Chats.FirstOrDefaultAsync(c => c.ID == chatID);
-                if (chat == null)
-                {
-                    return NotFound("Chat data not found.");
-                }
-
-                var totalCount = await _dbContext.Messages
-                    .Where(m => m.ChatID == chat.ID)
-                    .CountAsync();
-
-                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-                if (pageNumber > totalPages)
-                {
-                    return Ok(new PaginatedResponse<ResponseMessageModel>(new List<ResponseMessageModel>(), totalCount, pageNumber, pageSize));
-                }
-
-                var messages = await _dbContext.Messages
-                    .Where(m => m.ChatID == chat.ID)
-                    .OrderBy(x => x.SentTime)
-                    .Reverse()
-                    .Skip((pageNumber - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(m => new ResponseMessageModel
-                    {
-                        ID = m.ID,
-                        ChatID = m.ChatID,
-                        SendTime = m.SentTime,
-                        SenderData = new SenderDataModel
-                        {
-                            IsOwner = m.SenderID == user.ID,
-                            ID = m.SenderID,
-                            FirstName = m.Sender.FirstName,
-                            LastName = m.Sender.LastName
-                        },
-                        Content = m.Content,
-                    })
-                    .ToListAsync();
-
-                var paginatedList = new PaginatedResponse<ResponseMessageModel>(messages, totalCount, pageNumber, pageSize);
-                return Ok(paginatedList);
+                return Ok(messageResponse.Response);
             }
             catch (Exception ex)
             {

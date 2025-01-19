@@ -1,15 +1,30 @@
 
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using ChatAppASPNET.DBContext;
 using ChatAppASPNET.Hubs;
-using System.Text.Json.Serialization;
+using Infrastructure.DBContext;
+using Domain.UseCases.HubUseCases.Common;
+using Domain.UseCases.HubUseCases.AddFriend;
+using Domain.Handlers.HubHandlers.Common;
+using Domain.UseCases.Common;
+using Domain.Handlers.APIHandlers.AuthController.cs;
+using Domain.Handlers.HubHandlers;
+using Domain.Handlers.HubHandlers.DeleteChat;
+using Domain.Handlers.HubHandlers.JoinGroup;
+using Domain.Handlers.HubHandlers.SendMessage;
+using Domain.UseCases.APIUseCases.AuthController;
+using Domain.UseCases.APIUseCases.Common;
+using Domain.UseCases.APIUseCases.Messages;
+using Domain.UseCases.HubUseCases.AcceptFriend;
+using Domain.UseCases.HubUseCases.CreateNewChat;
+using Domain.UseCases.HubUseCases.DeleteChat;
+using Domain.UseCases.HubUseCases.EditChat;
+using Domain.UseCases.HubUseCases.LeaveChat;
+using Domain.UseCases.HubUseCases.RemoveFriend;
+using Domain.UseCases.HubUseCases.SendMessage;
+
 
 
 
@@ -26,11 +41,6 @@ namespace ChatAppASPNET
             // Add services to the container.
             builder.Services.AddSignalR();
             builder.Services.AddControllers();
-                //.AddJsonOptions(options =>
-                //{
-                //    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-                //    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-                //});
             builder.Services.AddControllersWithViews();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -51,6 +61,42 @@ namespace ChatAppASPNET
                 });
             });
 
+            builder.Services.AddMediatR(cfg =>
+            {
+                //Handlers
+                cfg.RegisterServicesFromAssembly(typeof(RegisterUserNotificationHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(EditChatNotificationHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(ErrorNotificationHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(NotifyUsersNotificationHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(UserNotificationHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(CreateNewChatNotificationHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(DeleteChatNotificationHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(JoinGroupNotificationHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(NotifyGroupExceptUserNotificationHandler).Assembly);
+                // UseCases
+                cfg.RegisterServicesFromAssembly(typeof(AuthenticateUserHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(ObtainTokenHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(RefreshTokenHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(GetUserModelHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(GetMessageListHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(DivideFriendshipsResponseHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(GenerateFriendshipResponseHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(GetUserListResponseHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(UserChatListResponseHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(AcceptFriendshipHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(ValidateFriendshipUseCaseHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(CreateFriendshipUseCaseHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(AuthenticateHubHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(GenerateUserChatListResponseHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(CreateNewChatHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(DeleteChatHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(EditChatDBActionHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(GetEditChatHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(LeaveChatHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(RemoveFriendshipHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(AddNewMessageHandler).Assembly);
+                cfg.RegisterServicesFromAssembly(typeof(GenerateNewMessageHandler).Assembly);
+            });
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(cfg =>

@@ -1,33 +1,33 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using ChatAppASPNET.Models.API;
 
-namespace ChatAppASPNET.DBContext.Entities
-{
 
-    public class Password
-    {
-        [Key]
-        public int ID { get; set; }
+//namespace ChatAppASPNET.DBContext.Entities
+//{
 
-        [ForeignKey("UserData")]
-        public int? UserID { get; set; }
+//    public class Password
+//    {
+//        [Key]
+//        public int ID { get; set; }
 
-        [Required]
-        [MaxLength(256)]
-        public string PasswordHash { get; set; } = string.Empty;
+//        [ForeignKey("UserData")]
+//        public int? UserID { get; set; }
 
-        [Required]
-        [MaxLength(256)]
-        public string Salt { get; set; } = String.Empty;
+//        [Required]
+//        [MaxLength(256)]
+//        public string PasswordHash { get; set; } = string.Empty;
 
-        [Required]
-        public int HashingRounds { get; set; } = 12;
+//        [Required]
+//        [MaxLength(256)]
+//        public string Salt { get; set; } = String.Empty;
 
-        [Required]
-        public DateTime PasswordSetDate { get; set; }
-    
-        public UserData? User { get; set; }
+//        [Required]
+//        public int HashingRounds { get; set; } = 12;
 
-    }
-}
+//        [Required]
+//        public DateTime PasswordSetDate { get; set; }
+
+//        public UserData? User { get; set; }
+
+//    }
+//}

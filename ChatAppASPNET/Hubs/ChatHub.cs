@@ -1,28 +1,36 @@
-﻿using Azure.Core;
-using ChatAppASPNET.DBContext;
-using ChatAppASPNET.DBContext.Entities;
-using ChatAppASPNET.Models.API;
-using ChatAppASPNET.Models.Hubs;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
-using static ChatAppASPNET.Utils;
 using System.Security.Claims;
-using System;
+using MediatR;
+using Domain.UseCases.Common;
+using Domain.UseCases.HubUseCases.Common;
+using Domain.UseCases.HubUseCases.AddFriend;
+using Domain.UseCases.HubUseCases.AcceptFriend;
+using Domain.UseCases.HubUseCases.RemoveFriend; 
+using Domain.UseCases.HubUseCases.CreateNewChat;
+using Domain.UseCases.HubUseCases.LeaveChat;
+using Domain.Handlers.HubHandlers.Common;
+using Domain.UseCases.HubUseCases.DeleteChat;
+using Domain.UseCases.HubUseCases.EditChat;
+using Domain.Handlers.HubHandlers.JoinGroup;
+using Domain.UseCases.HubUseCases.SendMessage;
+using Domain.Handlers.HubHandlers.SendMessage;
+using Domain.Models.HubModels;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ChatAppASPNET.Hubs
 {
     [Authorize]
     public class ChatHub : Hub
     {
-        AppDBContext _dbContext;
-        private static int MIN_CHAT_SIZE = 1;
+        private readonly static int MIN_CHAT_SIZE = 1;
+        private readonly IMediator _mediator;
+        private static string GenericErrorMessage = "Something went wrong...";
 
-        public ChatHub(AppDBContext dbContext)
+        public ChatHub(IMediator mediator)
         {
-            _dbContext = dbContext;
+            _mediator = mediator;
         }
 
         public override async Task OnConnectedAsync()
@@ -46,139 +54,131 @@ namespace ChatAppASPNET.Hubs
             await base.OnConnectedAsync();
         }
 
-
-        // Friends
         public async Task AddFriend(string friendEmail)
         {
             try
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email)?.Value;
+                var authentication = await _mediator.Send(new AuthenticateHubParameters() { Context = Context });
 
-                if (userEmail == null)
-                {
-                    throw new Exception("Failed to get user email");
-                }
+                var user = authentication.User;
 
-                var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == userEmail);
-                var friend = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == friendEmail);
-                if (user == null || friend == null)
-                {
-                    throw new Exception("Failed to fetch user or friend");
-                }
-                var friendshipExists = await _dbContext.Friends.FirstOrDefaultAsync(f => f.SenderID == user.ID && f.ReceiverID == friend.ID || f.SenderID == friend.ID && f.ReceiverID == user.ID);
+                var newFriendship = await _mediator.Send(new CreateFriendshipUseCaseParameters() { FriendEmail = friendEmail, UserEmail = user.Email });
+                var userUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters() { User = user });
 
-                if (friendshipExists != null)
-                {
-                    await Clients.Group(userEmail).SendAsync("FriendshipExists");
-                    return;
-                }
+                var userResponse = await _mediator.Send(new GenerateFriendshipResponseParameters() { User = user });
 
-                var newFriendship = new Friend
+                var friendResponse = await _mediator.Send(new GenerateFriendshipResponseParameters() { User = newFriendship.Friend });
+                var friendUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters() { User = newFriendship.Friend });
+
+                var userNotification = new UserNotification()
                 {
-                    SenderID = user.ID,
-                    ReceiverID = friend.ID,
-                    Status = FriendshipStatus.Pending,
+                    HubClients = Clients,
+                    GroupName = user.Email,
+                    EventName = "FriendshipRequestReceived",
+                    MessagePayload = new UserFriendshipResponseModel()
+                    {
+                        Users = userUnrelatedUsers.Users,
+                        Friendships = userResponse.FriendshipResponseModel
+                    }
                 };
 
-                await _dbContext.AddAsync(newFriendship);
-                await _dbContext.SaveChangesAsync();
+                var friendNotification = new UserNotification()
+                {
+                    HubClients = Clients,
+                    GroupName = newFriendship.Friend.Email,
+                    EventName = "FriendshipRequestReceived",
+                    Message = "New friendship request received",
+                    MessageType = "info",
+                    MessagePayload = new UserFriendshipResponseModel()
+                    {
+                        Users = friendUnrelatedUsers.Users,
+                        Friendships = friendResponse.FriendshipResponseModel
+                    }
+                };
 
-                var userResponse = await GenerateAddNewFriendResponse(_dbContext, user);
-                var friendResponse = await GenerateAddNewFriendResponse(_dbContext, friend);
-
-
-                await Clients.Group(userEmail).SendAsync("FriendshipRequestRecieved", userResponse);
-                await Clients.Group(friendEmail).SendAsync("FriendshipRequestRecieved", friendResponse);
-
-                await NotifyUser(userEmail, "Friendship request sent.", "success");
-                await NotifyUser(friendEmail, "You have received a new friendship request.", "info");
-
+                await _mediator.Publish(userNotification);
+                await _mediator.Publish(friendNotification);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                await NotifyUserOnError(Context.User.FindFirst(ClaimTypes.Email)?.Value, ex);
+                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    throw;
+                }
+                var errorNotification = new ErrorNotification()
+                {
+                    HubClients = Clients,
+                    GroupName = userEmail,
+                    ex = ex,
+                };
+
+                await _mediator.Publish(errorNotification);
             }
         }
 
-            public async Task AcceptFriend(int friendshipId)
+        public async Task AcceptFriend(int friendshipID)
         {
             try
             {
-                var senderEmail = Context?.User?.FindFirst(ClaimTypes.Email)?.Value;
-
-                if (string.IsNullOrEmpty(senderEmail))
+                var data = await _mediator.Send(new ValidateFriendshipUseCaseParameters()
                 {
-                    throw new Exception("Failed to fetch sender details");
-                }
+                    Context = Context,
+                    friendshipID = friendshipID
+                });
 
-                var sender = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == senderEmail);
-
-                if (sender == null)
+                var acceptedFriendship = await _mediator.Send(new AcceptFriendshipParameters()
                 {
-                    throw new Exception("Failed to fetch user");
-                }
+                    Sender = data.Sender,
+                    Receiver = data.Receiver,
+                    Friendship = data.Friendship,
+                });
 
-                var friendship = await _dbContext.Friends.Include(f => f.Sender).Include(f => f.Receiver).FirstOrDefaultAsync(fr => fr.ID == friendshipId && (fr.SenderID == sender.ID || fr.ReceiverID == sender.ID));
-
-                if (friendship == null)
+                var acceptFriendSenderResponse = await _mediator.Send(new GenerateFriendshipResponseParameters()
                 {
-                    throw new Exception("Failed to fetch friendship object");
-                }
+                    User = data.Sender,
+                });
 
-                var receiver = friendship.SenderID == sender.ID ? friendship.Receiver : friendship.Sender;
-
-
-                if (sender == null || receiver == null)
+                var acceptFriendReceiverResponse = await _mediator.Send(new GenerateFriendshipResponseParameters()
                 {
-                    throw new Exception("Failed to fetch sender or receiver data");
-                }
+                    User = data.Sender,
+                });
 
-
-                var newChat = new Chat
+                var senderNotification = new UserNotification()
                 {
-                    ChatType = ChatType.DM,
-                    ChatName = $"{sender.FirstName} {receiver.FirstName}"
-
-                };
-                friendship.Status = FriendshipStatus.Accepted;
-
-                await _dbContext.Chats.AddAsync(newChat);
-
-                var p1 = new ChatParticipant
-                {
-                    ChatID = newChat.ID,
-                    UserID = sender.ID,
+                    HubClients = Clients,
+                    GroupName = data.Sender.Email,
+                    EventName = "FriendshipAccepted",
+                    MessagePayload = acceptFriendSenderResponse.FriendshipResponseModel,
                 };
 
-                var p2 = new ChatParticipant
+                var receiverNotification = new UserNotification()
                 {
-                    ChatID = newChat.ID,
-                    UserID = receiver.ID,
+                    HubClients = Clients,
+                    GroupName = data.Receiver.Email,
+                    EventName = "FriendshipAccepted",
+                    Message = "Friendship has been accepted.",
+                    MessageType = "info",
+                    MessagePayload = acceptFriendSenderResponse.FriendshipResponseModel,
                 };
 
-                newChat.Participants.Add(p1);
-                newChat.Participants.Add(p2);
-
-                await _dbContext.SaveChangesAsync();
-
-                var senderResponse = await GenerateAcceptFriendResponse(_dbContext, sender);
-                var receiverResponse = await GenerateAcceptFriendResponse(_dbContext, receiver);
-
-                await Clients.Group(sender.Email).SendAsync("FriendshipAccepted", senderResponse);
-                await Clients.Group(receiver.Email).SendAsync("FriendshipAccepted", receiverResponse);
-
-                await NotifyUser(sender.Email, "Friendship request accepted!", "success");
-                await NotifyUser(receiver.Email, $"{sender.FirstName} accepted your friendship request!", "info");
-
+                await _mediator.Publish(senderNotification);
+                await _mediator.Publish(receiverNotification);
             }
-
             catch (Exception ex)
             {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
+                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    throw;
+                }
+                var errorNotification = new ErrorNotification()
+                {
+                    HubClients = Clients,
+                    GroupName = userEmail,
+                    ex = ex,
+                };
+                await _mediator.Publish(errorNotification);
             }
         }
 
@@ -186,244 +186,199 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email)?.Value;
+                var authentication = await _mediator.Send(new AuthenticateHubParameters()
+                {
+                    Context = Context,
+                });
 
+                var friendshipResponse = await _mediator.Send(new RemoveFriendshipParameters()
+                {
+                    FriendshipID = friendshipID,
+                    User = authentication.User,
+                });
+
+                var userResponse = await _mediator.Send(new GenerateFriendshipResponseParameters() { User = authentication.User });
+                var userUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters() { User = authentication.User });
+
+                var friendResponse = await _mediator.Send(new GenerateFriendshipResponseParameters() { User = friendshipResponse.Friend });
+                var friendUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters() { User = friendshipResponse.Friend });
+
+                var userNotification = new UserNotification()
+                {
+                    HubClients = Clients,
+                    GroupName = authentication.User.Email,
+                    EventName = "FriendshipCancelled",
+                    MessagePayload = new UserFriendshipResponseModel()
+                    {
+                        Users = userUnrelatedUsers.Users,
+                        Friendships = userResponse.FriendshipResponseModel,
+                    }
+                };
+
+                var friendNotification = new UserNotification()
+                {
+                    HubClients = Clients,
+                    GroupName = friendshipResponse.Friend.Email,
+                    EventName = "FriendshipCancelled",
+                    Message = "Friendship has been cancelled.",
+                    MessageType = "info",
+                    MessagePayload = new UserFriendshipResponseModel()
+                    {
+                        Users = friendUnrelatedUsers.Users,
+                        Friendships = friendResponse.FriendshipResponseModel
+                    }
+                };
+
+                await _mediator.Publish(userNotification);
+                await _mediator.Publish(friendNotification);
+            }
+            catch (Exception ex)
+            {
+                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
                 if (string.IsNullOrEmpty(userEmail))
                 {
-                    throw new Exception("Invalid user email or friend email");
+                    throw;
                 }
-
-                var user = await _dbContext.UserData.FirstOrDefaultAsync(u => u.Email == userEmail);
-
-                if (user == null)
+                var errorNotification = new ErrorNotification()
                 {
-                    throw new Exception("Failed to fetch user data");
+                    HubClients = Clients,
+                    GroupName = userEmail,
+                    ex = ex,
+                };
+                await _mediator.Publish(errorNotification);
+            }
+        }
+
+        public async Task CreateNewChat(NewChatModel model)
+        {
+            try
+            {
+                var authentication = await _mediator.Send(new AuthenticateHubParameters()
+                {
+                    Context = Context,
+                });
+
+                var newChatResponse = await _mediator.Send(new CreateNewChatParameters() { ChatName = model.ChatName, ParticipantIDList = model.ParticipantsID, User = authentication.User });
+
+                var userResponse = await _mediator.Send(new GenerateUserChatListResponseParameters() { User = authentication.User });
+
+                await _mediator.Publish(new UserNotification()
+                {
+                    EventName = "EditChat",
+                    GroupName = authentication.User.Email,
+                    HubClients = Clients,
+                    Message = "Chat Created Successfully.",
+                    MessageType = "success",
+                    MessagePayload = userResponse.UserResponse
+                });
+
+                await _mediator.Publish(new NotifyUsersNotification()
+                {
+                    HubClients = Clients,
+                    ChatParticipants = newChatResponse.Users,
+                    User = authentication.User,
+                    EventName = "AddedToChat",
+                    Message = "You have been added to a chat.",
+                    MessageType = "info",
+                });
+            }
+            catch (Exception ex)
+            {
+                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    throw;
                 }
-
-                var friendship = await _dbContext.Friends.Include(f => f.Sender).Include(f => f.Receiver).FirstOrDefaultAsync(f => f.ID == friendshipID);
-
-                if (friendship == null)
+                var errorNotification = new ErrorNotification()
                 {
-                    throw new Exception("Failed to fetch friendship data");
+                    HubClients = Clients,
+                    GroupName = userEmail,
+                    ex = ex,
+                };
+                await _mediator.Publish(errorNotification);
+            }
+        }
+
+        public async Task LeaveChat(int ChatID)
+        {
+            try
+            {
+                var authentication = await _mediator.Send(new AuthenticateHubParameters() { Context = Context, });
+                var leaveChatResults = await _mediator.Send(new LeaveChatParameters() { ChatID = ChatID, User = authentication.User });
+
+                var userResponse = await _mediator.Send(new UserChatListResponseParameters() { User = authentication.User });
+
+                await _mediator.Publish(new EditChatNotification()
+                {
+                    HubClients = Clients,
+                    User = authentication.User,
+                    ChatList = userResponse.ChatList,
+                });
+            }
+            catch (Exception ex)
+            {
+                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    throw;
                 }
-
-                var friend = friendship.SenderID == user.ID ? friendship.Receiver : friendship.Sender;
-
-                if (friend == null)
+                var errorNotification = new ErrorNotification()
                 {
-                    throw new Exception("Failed to fetch friend data");
-                }
+                    HubClients = Clients,
+                    GroupName = userEmail,
+                    ex = ex,
+                };
+                await _mediator.Publish(errorNotification);
+            }
+        }
+        public async Task DeleteChat(int ChatID)
+        {
+            try
+            {
+                var authentication = await _mediator.Send(new AuthenticateHubParameters() { Context = Context });
 
-                // Czy można to jakoś ładniej usunąć?
-                if (friendship.Status == FriendshipStatus.Accepted)
+                var deleteChatResponse = await _mediator.Send(new DeleteChatParameters() { ChatID = ChatID, User = authentication.User });
+
+                var userResponse = await _mediator.Send(new GenerateUserChatListResponseParameters() { User = authentication.User });
+
+                await _mediator.Publish(new UserNotification()
                 {
-                    var chat = await _dbContext.Chats.Include(c => c.Participants)
-                            .FirstOrDefaultAsync(c => c.ChatType == ChatType.DM
-                                                   && c.Participants.Any(p => p.UserID == user.ID)
-                                                   && c.Participants.Any(p => p.UserID == friend.ID));
-
-                    if (chat != null)
+                    EventName = "ChatDeleted",
+                    GroupName = authentication.User.Email,
+                    HubClients = Clients,
+                    Message = "Chat has been deleted.",
+                    MessageType = "success",
+                    MessagePayload = new
                     {
-                        var chatParticipants = chat.Participants.Where(p => p.UserID == user.ID || p.UserID == friend.ID).ToList();
-                        var messages = _dbContext.Messages.Where(m => m.ChatID == chat.ID).ToList();
-                        _dbContext.Messages.RemoveRange(messages);
-                        _dbContext.ChatParticipants.RemoveRange(chatParticipants);
-                        _dbContext.Chats.Remove(chat);
-
+                        chatID= ChatID,
+                        UserChatList= userResponse.UserResponse
                     }
-                }
-                _dbContext.Remove(friendship);
-                await _dbContext.SaveChangesAsync();
+                });
 
-                var userResponse = await GenerateAddNewFriendResponse(_dbContext, user);
-                var friendResponse = await GenerateAddNewFriendResponse(_dbContext, friend);
-
-                await Clients.Group(userEmail).SendAsync("FriendshipCancelled", userResponse);
-                await Clients.Group(friend.Email).SendAsync("FriendshipCancelled", friendResponse);
-
-                await NotifyUser(userEmail, "Friendship cancelled successfully.", "info");
-                await NotifyUser(friend.Email, $"{user.FirstName} removed you as a friend.", "info");
-
-
+                await _mediator.Publish(new NotifyUsersNotification()
+                {
+                    HubClients = Clients,
+                    User = authentication.User,
+                    ChatParticipants = deleteChatResponse.ChatParticipants,
+                    EventName = "ChatDeleted",
+                    Message = "Chat has been deleted.",
+                    MessageType = "info"
+                });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
-            }
-        }
-
-
-        // Chats
-        public async Task CreateNewChat([FromBody] PostChatModel model)
-        {
-            try
-            {
-                var authentication = await AuthenticateUser(Context, _dbContext);
-                if (!string.IsNullOrEmpty(authentication.ErrorMessage))
+                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
+                if (string.IsNullOrEmpty(userEmail))
                 {
-                    throw new Exception(authentication.ErrorMessage);
-                }
-                var user = authentication.User;
-
-                if (model.ChatName == String.Empty || model.ParticipantsID.Count < MIN_CHAT_SIZE)
-                {
-                    throw new Exception("Invalid Data");
-                }
-
-                model.ParticipantsID.Add(user.ID);
-
-                var userIDSet = new HashSet<int>(model.ParticipantsID);
-
-                var users = await _dbContext.UserData.Where(u => userIDSet.Contains(u.ID)).ToListAsync();
-
-                using var transaction = await _dbContext.Database.BeginTransactionAsync();
-                try
-                {
-                    var newChat = new Chat
-                    {
-                        ChatType = ChatType.Group,
-                        ChatName = model.ChatName,
-                        Owner = user.ID,
-                    };
-
-                    _dbContext.Add(newChat);
-                    var participants = users.Select(u => new ChatParticipant
-                    {
-                        ChatID = newChat.ID,
-                        UserID = u.ID,
-                    }).ToList();
-                    _dbContext.ChatParticipants.AddRange(participants);
-
-                    newChat.Participants = participants;
-                    await _dbContext.SaveChangesAsync();
-                    await _dbContext.SaveChangesAsync();
-                    await transaction.CommitAsync();
-                }
-                catch
-                {
-                    await transaction.RollbackAsync();
                     throw;
                 }
-
-
-                foreach (var u in users)
+                var errorNotification = new ErrorNotification()
                 {
-                    var participantResponse = await UserChatList(_dbContext, u);
-                    await Clients.Group(u.Email).SendAsync("AddedToChat", participantResponse);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
-            }
-        }
-
-        public async Task LeaveChat(int chatID)
-        {
-            try
-            {
-                var authentication = await AuthenticateUser(Context, _dbContext);
-                if (!string.IsNullOrEmpty(authentication.ErrorMessage))
-                {
-                    throw new Exception(authentication.ErrorMessage);
-                }
-                var user = authentication.User;
-
-                var chat = await _dbContext.Chats.Include(c => c.Participants).ThenInclude(cp => cp.User).FirstOrDefaultAsync(c => c.ID == chatID && c.ChatType != ChatType.DM);
-
-                if (chat == null)
-                {
-                    throw new Exception("Failed to fetch chat");
-                }
-
-                var participant = await _dbContext.ChatParticipants.FirstOrDefaultAsync(cp => cp.ChatID == chatID && cp.UserID == user.ID);
-
-                if (participant == null)
-                {
-                    throw new Exception("Failed to fetch participant Data");
-                }
-                _dbContext.Remove(participant);
-                await _dbContext.SaveChangesAsync();
-
-
-                var users = chat.Participants.Select(p => p.User).ToList();
-                users.Add(user);
-
-
-
-                foreach (var u in users)
-                {
-                    var userChatList = await UserChatList(_dbContext, u);
-                    Console.WriteLine($"User Email: {u.Email}");
-                    await Clients.Group(u.Email).SendAsync("EditChat", userChatList);
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
-            }
-        }
-
-        public async Task DeleteChat(int chatID)
-        {
-            try
-            {
-                var authentication = await AuthenticateUser(Context, _dbContext);
-                if (!string.IsNullOrEmpty(authentication.ErrorMessage))
-                {
-                    throw new Exception(authentication.ErrorMessage);
-                }
-                var user = authentication.User;
-
-                var chat = await _dbContext.Chats.FirstOrDefaultAsync(c => c.ID == chatID && c.Owner == user.ID);
-                if (chat == null)
-                {
-                    throw new Exception("Failed to fetch chat");
-                }
-
-                var messages = _dbContext.Messages.Where(m => m.ChatID == chatID).ToList();
-                var chatParticipants = _dbContext.ChatParticipants.Include(c => c.User).Where(c => c.ChatID == chatID).ToList();
-                var users = chatParticipants.Select(c => c.User).ToList();
-
-                using var transaction = await _dbContext.Database.BeginTransactionAsync();
-                try
-                {
-
-                    _dbContext.Messages.RemoveRange(messages);
-                    _dbContext.ChatParticipants.RemoveRange(chatParticipants);
-                    _dbContext.Chats.Remove(chat);
-                    await _dbContext.SaveChangesAsync();
-                    await transaction.CommitAsync();
-                }
-                catch
-                {
-                    await transaction.RollbackAsync();
-                    throw;
-                }
-
-                foreach (var u in users)
-                {
-                    var userChatList = await UserChatList(_dbContext, u);
-                    await Clients.Group(u.Email).SendAsync("ChatDeleted", new
-                    {
-                        chatID = chat.ID,
-                        userChatList = userChatList
-                    });
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
+                    HubClients = Clients,
+                    GroupName = userEmail,
+                    ex = ex,
+                };
+                await _mediator.Publish(errorNotification);
             }
         }
 
@@ -431,259 +386,103 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
+                var authentication = await _mediator.Send(new AuthenticateHubParameters() { Context = Context });
+                var getChatData = await _mediator.Send(new GetEditChatParameters() { model = model, User = authentication.User });
+                var dbResponseData = await _mediator.Send(new EditChatDBActionParameters() { Chat = getChatData.Chat, CurrentParticipants = getChatData.CurrentParticipants, FilteredUserIDs = getChatData.FilteredUserIDs, model = model, ParticipantsToAdd = getChatData.ParticipantsToAdd, ParticipantsToRemove = getChatData.ParticipantsToRemove });
 
-                if (model.ParticipantsID == null || !model.ParticipantsID.Any())
-                {
-                    throw new Exception("Participant list cannot be empty.");
-                }
+                await _mediator.Publish(new NotifyUsersNotification() { HubClients = Clients, ChatParticipants = dbResponseData.UpdatedParticipants, EventName = "EditChat", Message = "Chat has been updated.", MessageType = "info", User = authentication.User });
 
-                var authentication = await AuthenticateUser(Context, _dbContext);
-                if (!string.IsNullOrEmpty(authentication.ErrorMessage))
-                {
-                    throw new Exception(authentication.ErrorMessage);
-                }
+                await _mediator.Publish(new NotifyUsersNotification() { HubClients = Clients, ChatParticipants = dbResponseData.AddedParticipants, EventName = "AddedToChat", Message = "info", MessageType = "You have been added to a chat.", User = authentication.User });
 
-                var user = authentication.User;
-
-                var chat = await _dbContext.Chats.Include(c => c.Participants).FirstOrDefaultAsync(c => c.ID == model.chatID && c.Owner == user.ID);
-                Console.WriteLine("Chat");
-                if (chat == null)
-                {
-                    throw new Exception("Failed to fetch chat data");
-                }
-
-                var userFriendsIDs = await _dbContext.Friends.Include(f => f.Sender).Include(f => f.Receiver).Where(f => f.SenderID == user.ID || f.ReceiverID == user.ID).Select(f => f.SenderID == user.ID ? f.ReceiverID : f.SenderID).ToListAsync();
-
-                var filteredUserIDs = model.ParticipantsID.Where(id => userFriendsIDs.Contains(id)).ToHashSet();
-                filteredUserIDs.Add(user.ID);
-
-
-                var currentParticipants = new HashSet<int>(chat.Participants.Select(p => p.UserID));
-                var participantsToAdd = filteredUserIDs.Except(currentParticipants).ToList();
-                var participantsToRemove = currentParticipants.Except(filteredUserIDs).ToList();
-                var removedUsers = await _dbContext.ChatParticipants.Include(cp => cp.User).Where(cp => participantsToRemove.Contains(cp.UserID)).Select(cp => cp.User).ToListAsync();
-
-                using var transaction = await _dbContext.Database.BeginTransactionAsync();
-                try
-                {
-                    var newParticipants = participantsToAdd.Select(id => new ChatParticipant { ChatID = chat.ID, UserID = id }).ToList();
-                    if ((newParticipants.Count + currentParticipants.Count - participantsToRemove.Count) < MIN_CHAT_SIZE)
-                    {
-                        throw new Exception("Chat is too small");
-                    }
-                    await _dbContext.ChatParticipants.AddRangeAsync(newParticipants);
-
-                    var participantsToRemoveEntities = await _dbContext.ChatParticipants
-                                                                       .Where(cp => participantsToRemove.Contains(cp.UserID) && cp.ChatID == chat.ID)
-                                                                       .ToListAsync();
-                    _dbContext.ChatParticipants.RemoveRange(participantsToRemoveEntities);
-
-                    chat.ChatName = model.ChatName;
-
-                    await _dbContext.SaveChangesAsync();
-                    await transaction.CommitAsync();
-                }
-                catch
-                {
-                    await transaction.RollbackAsync();
-                    throw;
-                }
-
-                var removedParticipants = await _dbContext.ChatParticipants.Include(cp => cp.User).Where(cp => cp.ChatID == chat.ID).Select(cp => cp.User).ToListAsync();
-
-                var updatedParticipants = await _dbContext.ChatParticipants.Include(cp => cp.User).Where(cp => cp.ChatID == chat.ID).Select(cp => cp.User).ToListAsync();
-
-
-                foreach (var u in removedUsers)
-                {
-                    var userChatList = await UserChatList(_dbContext, u);
-                    await Clients.Group(u.Email).SendAsync("UserRemoved", new
-                    {
-                        chatID = chat.ID,
-                        userChatList = userChatList
-                    });
-                }
-
-                foreach (var u in updatedParticipants)
-                {
-                    var userChatList = await UserChatList(_dbContext, u);
-                    await Clients.Group(u.Email).SendAsync("EditChat", userChatList);
-                }
+                await _mediator.Publish(new NotifyUsersNotification() { HubClients = Clients, ChatParticipants = dbResponseData.RemovedParticipants, EventName = "UserRemoved", Message = "You have been removed from a chat.", MessageType = "info", User = authentication.User });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
+                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    throw;
+                }
+                var errorNotification = new ErrorNotification()
+                {
+                    HubClients = Clients,
+                    GroupName = userEmail,
+                    ex = ex,
+                };
+                await _mediator.Publish(errorNotification);
             }
         }
-
 
         // Messages
         public async Task JoinGroup(int groupID)
         {
             try
             {
-                var chat = await _dbContext.Chats.FirstOrDefaultAsync(c => c.ID == groupID);
-
-                if (chat == null)
+                await _mediator.Publish(new JoinGroupNotification()
                 {
-                    throw new Exception("Failed to join to a group");
-                }
-
-                var groupName = $"{chat.ChatName}_{chat.ID}";
-                await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
-            }
-
-        }
-
-        public async Task SendMessage([FromBody] RequestMessageModel model)
-        {
-            try
-            {
-                var authentication = await AuthenticateUser(Context, _dbContext);
-                if (!string.IsNullOrEmpty(authentication.ErrorMessage))
-                {
-                    throw new Exception(authentication.ErrorMessage);
-                }
-                var user = authentication.User;
-
-                var chat = await _dbContext.Chats.FirstOrDefaultAsync(c => c.ID == model.ChatID);
-
-                if (chat is null)
-                {
-                    throw new Exception("Failed to fetch data");
-                }
-
-                var newMessage = new Message
-                {
-                    ChatID = chat.ID,
-                    SenderID = user.ID,
-                    SentTime = DateTime.Now,
-                    Content = model.Content,
-                };
-
-                await _dbContext.AddAsync(newMessage);
-                await _dbContext.SaveChangesAsync();
-
-                var userMessageResponse = new ResponseMessageModel
-                {
-                    ID = newMessage.ID,
-                    ChatID = newMessage.ChatID,
-                    SendTime = newMessage.SentTime,
-                    SenderData = new SenderDataModel
-                    {
-                        IsOwner = true,
-                        ID = newMessage.SenderID,
-                        FirstName = newMessage.Sender.FirstName,
-                        LastName = newMessage.Sender.LastName
-                    },
-                    Content = newMessage.Content,
-                };
-
-                var groupMessageResponse = new ResponseMessageModel
-                {
-                    ID = newMessage.ID,
-                    ChatID = newMessage.ChatID,
-                    SendTime = newMessage.SentTime,
-                    SenderData = new SenderDataModel
-                    {
-                        IsOwner = false,
-                        ID = newMessage.SenderID,
-                        FirstName = newMessage.Sender.FirstName,
-                        LastName = newMessage.Sender.LastName
-                    },
-                    Content = newMessage.Content,
-                };
-
-                var groupName = $"{chat.ChatName}_{chat.ID}";
-                await Clients.Group(user.Email).SendAsync("MessageSent", userMessageResponse);
-                await Clients.GroupExcept(groupName, Context.ConnectionId).SendAsync("MessageSent", groupMessageResponse);
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-                await NotifyUserOnError(Context?.User?.FindFirst(ClaimTypes.Email)?.Value, ex);
-            }
-        }
-
-        public async Task InvokeMessage(string userEmail, string message)
-        {
-            try
-            {
-                var authentication = await AuthenticateUser(Context, _dbContext);
-                if (!string.IsNullOrEmpty(authentication.ErrorMessage))
-                {
-                    throw new Exception(authentication.ErrorMessage);
-                }
-
-                var user = authentication.User;
-                // Predefined list of random error messages
-                var errorMessages = new List<string>
-                    {
-                        "An unexpected error occurred. Please try again later.",
-                        "The server encountered an issue. Contact support if it persists.",
-                        "Unable to process your request at the moment.",
-                        "Something went wrong. Refresh and try again.",
-                        "An error happened, but we don't know why. Sorry!"
-                    };
-
-                // Generate a random message
-                var random = new Random();
-                var randomMessage = errorMessages[random.Next(errorMessages.Count)];
-
-                // Send the random error message to the client
-                await Clients.Group(user.Email).SendAsync("MessageEvent", new
-                {
-                    Message = randomMessage,
-                    MessageType = "info"
+                    Context = Context,
+                    ChatID = groupID,
+                    Groups = Groups,
                 });
-
-
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
-            }
-        }
-
-        private async Task NotifyUserOnError(string userEmail, Exception exception)
-        {
-            var errorMessage = string.IsNullOrEmpty(exception.Message)
-                ? "Something went wrong. Please try again later."
-                : exception.Message;
-            await NotifyUser(userEmail, errorMessage, "error");
-        }
-
-        private async Task NotifyUser(string userEmail, string message, string messageType = "info")
-        {
-            try
-            {
+                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
                 if (string.IsNullOrEmpty(userEmail))
                 {
-                    Console.WriteLine("Failed to get user email for notification.");
-                    return;
+                    throw;
                 }
-
-                await Clients.Group(userEmail).SendAsync("MessageEvent", new
+                var errorNotification = new ErrorNotification()
                 {
-                    Message = message,
-                    MessageType = messageType
+                    HubClients = Clients,
+                    GroupName = userEmail,
+                    ex = ex,
+                };
+                await _mediator.Publish(errorNotification);
+            }
+        }
+
+        public async Task SendMessage([FromBody] NewMessageModel model)
+        {
+            try
+            {
+                var authentication = await _mediator.Send(new AuthenticateHubParameters() { Context = Context });
+                var dbResponse = await _mediator.Send(new AddNewMessageParameters() { model = model, User = authentication.User });
+
+                var userResponse = await _mediator.Send(new GenerateNewMessageParameters() { IsOwner = true, Message = dbResponse.Message });
+                var chatResponse = await _mediator.Send(new GenerateNewMessageParameters() { IsOwner = false, Message = dbResponse.Message });
+
+                await _mediator.Publish(new UserNotification()
+                {
+                    EventName = "MessageSent",
+                    GroupName = authentication.User.Email,
+                    HubClients = Clients,
+                    MessagePayload = userResponse.ResponseMessage,
+                });
+
+                await _mediator.Publish(new NotifyGroupExceptUserNotification()
+                {
+                    HubClients = Clients,
+                    Context = Context,
+                    GroupName = dbResponse.GroupName,
+                    EventName = "MessageSent",
+                    MessagePayload = chatResponse
                 });
             }
-            catch (Exception notifyEx)
+            catch (Exception ex)
             {
-                Console.WriteLine($"Failed to send message to user: {notifyEx.Message}");
-                Console.WriteLine($"Stack Trace: {notifyEx.StackTrace}");
+                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
+                if (string.IsNullOrEmpty(userEmail))
+                {
+                    throw;
+                }
+                var errorNotification = new ErrorNotification()
+                {
+                    HubClients = Clients,
+                    GroupName = userEmail,
+                    ex = ex,
+                };
+                await _mediator.Publish(errorNotification);
             }
         }
 
@@ -696,3 +495,4 @@ namespace ChatAppASPNET.Hubs
         }
     }
 }
+
