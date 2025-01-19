@@ -10,7 +10,7 @@ namespace Domain.Handlers.HubHandlers.Common
     {
         public required IHubCallerClients HubClients { get; set; }
         public required List<UserData> ChatParticipants { get; set; }
-        public required UserData User { get; set; }
+        public  UserData User { get; set; }
         public required string EventName { get; set; }
         public required string Message { get; set; }
         public required string MessageType { get; set; }

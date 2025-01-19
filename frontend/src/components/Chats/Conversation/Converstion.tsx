@@ -10,6 +10,9 @@ import { SignalRContext } from "../../../providers/SignalRContextProvider";
 import { JOIN_GROUP_ACTION, MESSAGE_RECEIVED } from "../../../constants/signalRActions";
 import { ChatMessage } from "../../../types/messages";
 import { ChatRouteParams } from "../../../types/Chats";
+import { SignalRAPIResponseMessage } from "../../../types/siglalRSubscriptions";
+import { handleMessageReceived } from "../../../utils/SignalRAaction/handleMessageReceived";
+import useAPIMessagesHook from "../../../hooks/useAPIMessagesHook";
 
 interface Props {}
 
@@ -18,8 +21,14 @@ const Converstation = ({}: Props) => {
     const chatID = parseInt(params.chatID || "", 10);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const connection = SignalRContext;
+    const { updateMessages } = useAPIMessagesHook();
     const { handleSignalRAction } = useSignalRAction();
     const { handleCurrActiveChatChange } = useAppContext();
+
+    const handleMessageChange = (newMessage: ChatMessage): void => {
+        setMessages((prevMessages) => [newMessage, ...prevMessages]);
+    };
+
     const { data, fetchNextPage, isFetchingNextPage, isFetchNextPageError, isLoading, isError, hasNextPage } =
         useGetInfiniteMessages(chatID);
     const { ref, inView } = useInView();
@@ -56,13 +65,11 @@ const Converstation = ({}: Props) => {
 
     connection.useSignalREffect(
         MESSAGE_RECEIVED,
-        (newMessage: ChatMessage) => {
-            setMessages((prevMessages) => [newMessage, ...prevMessages]);
+        (data: SignalRAPIResponseMessage<ChatMessage>) => {
+            handleMessageReceived(data, handleMessageChange, updateMessages);
         },
         []
     );
-
-
 
     if (isLoading) {
         return (

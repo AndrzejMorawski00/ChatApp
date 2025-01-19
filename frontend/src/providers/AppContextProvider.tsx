@@ -15,23 +15,26 @@ const AppContextProvider = ({ children }: Props) => {
     const [currActiveChat, setCurrActiveChat] = useState<number | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [searchBarValue, setSearchBarValue] = useState<string>("");
-    const [messages, setMessages] = useState<ApiStatusMessage[]>([
-        {
-            id: Infinity,
-            messageType: "error",
-            message: "This is Error Message",
-        },
-        {
-            id: Infinity,
-            messageType: "success",
-            message: "This is Success Message",
-        },
-        {
-            id: Infinity,
-            messageType: "info",
-            message: "This is Info Message",
-        },
-    ]);
+    // const [messages, setMessages] = useState<ApiStatusMessage[]>([
+    //     {
+    //         id: Infinity,
+    //         messageType: "error",
+    //         message: "This is Error Message",
+    //     },
+    //     {
+    //         id: Infinity,
+    //         messageType: "success",
+    //         message: "This is Success Message",
+    //     },
+    //     {
+    //         id: Infinity,
+    //         messageType: "info",
+    //         message: "This is Info Message",
+    //     },
+    // ]);
+    const [messages, setMessages] = useState<ApiStatusMessage[]>([]);
+      
+
 
     const handleThemeChange = (newThemeValue: ThemeColor): void => {
         setTheme((prevValue) => {

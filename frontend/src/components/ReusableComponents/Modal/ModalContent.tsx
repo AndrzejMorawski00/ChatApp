@@ -13,8 +13,8 @@ const ModalContent = ({title, children} : Props) => {
     return <AlertDialog.Portal>
         <AlertDialog.Overlay className="dialogOverlay">
             <AlertDialog.Content className="dialogContent">
-                {title&&<AlertDialog.Title className="mb-2 text-2xl tracking-wider text-textColor">{title}:</AlertDialog.Title>}
-                <AlertDialog.Description></AlertDialog.Description>
+                {title&&<AlertDialog.Title  className="mb-2 text-2xl tracking-wider text-textColor">{title}:</AlertDialog.Title>}
+                <AlertDialog.Description/>
                 {children}
             </AlertDialog.Content>
         </AlertDialog.Overlay>
@@ -22,3 +22,4 @@ const ModalContent = ({title, children} : Props) => {
 }
 
 export default ModalContent
+

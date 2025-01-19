@@ -41,16 +41,26 @@ namespace Domain.UseCases.HubUseCases.EditChat
 
         public async Task<GetEditChatResults> Handle(GetEditChatParameters request, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrEmpty(request.model.ChatName))
+            {
+                throw new Exception("Invalid chat name");
+            }
             var model = request.model;
             var user = request.User;
-            var chat = await _dbContext.Chats.Include(c => c.Participants).FirstOrDefaultAsync(c => c.ID == model.chatID && c.Owner == user.ID);
-            Console.WriteLine("Chat");
+            var chat = await _dbContext.Chats
+                .Include(c => c.Participants)
+                .FirstOrDefaultAsync(c => c.ID == model.chatID && c.Owner == user.ID);
             if (chat == null)
             {
                 throw new Exception("Failed to fetch chat data");
             }
 
-            var userFriendsIDs = await _dbContext.Friends.Include(f => f.Sender).Include(f => f.Receiver).Where(f => f.SenderID == user.ID || f.ReceiverID == user.ID).Select(f => f.SenderID == user.ID ? f.ReceiverID : f.SenderID).ToListAsync();
+            var userFriendsIDs = await _dbContext.Friends
+                .Include(f => f.Sender)
+                .Include(f => f.Receiver)
+                .Where(f => f.SenderID == user.ID || f.ReceiverID == user.ID)
+                .Select(f => f.SenderID == user.ID ? f.ReceiverID : f.SenderID)
+                .ToListAsync();
 
             var filteredUserIDs = model.ParticipantsID.Where(id => userFriendsIDs.Contains(id)).ToHashSet();
             filteredUserIDs.Add(user.ID);
@@ -59,7 +69,6 @@ namespace Domain.UseCases.HubUseCases.EditChat
             var currentParticipants = new HashSet<int>(chat.Participants.Select(p => p.UserID));
             var participantsToAdd = filteredUserIDs.Except(currentParticipants).ToList();
             var participantsToRemove = currentParticipants.Except(filteredUserIDs).ToList();
-            var removedUsers = await _dbContext.ChatParticipants.Include(cp => cp.User).Where(cp => participantsToRemove.Contains(cp.UserID)).Select(cp => cp.User).ToListAsync();
 
             return new GetEditChatResults()
             {

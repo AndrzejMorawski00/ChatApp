@@ -4,6 +4,7 @@ import { isValidKeyValue } from "../../utils/common";
 import { isValidRegisterForm } from "../../utils/auth/isValidAuthForm";
 import { Link } from "react-router";
 import useRegisterUser from "../../api/auth/useRegisterUser";
+import Header from "../../components/Header/Header";
 
 const INITIAL_REGISTER_FORM: RegisterFormType = {
     firstName: "",
@@ -43,11 +44,9 @@ const Register = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center w-screen h-screen gap-1">
-            <header>
-                <h2 className="mb-4 text-4xl tracking-wider text-textColor">Register User:</h2>
-            </header>
-            <form action="" onSubmit={handleFormSubmit} className="flex flex-col gap-2 mt-2">
+        <div className="flex flex-col items-center w-screen h-screen gap-1">
+            <Header/>
+            <form action="" onSubmit={handleFormSubmit} className="flex flex-col gap-2 mt-10">
                 <div className="flex flex-row gap-4">
                     <div className="flex flex-col gap-2">
                         {" "}

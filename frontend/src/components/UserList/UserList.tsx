@@ -1,9 +1,10 @@
 import useGetRequest from "../../api/useGetRequest/useGetRequest";
+import { USER_API_ENDPOINT } from "../../constants/endpoints";
 import useAppContext from "../../hooks/useAppContextHook";
 import { UserData } from "../../types/Users";
 import UserItem from "./UserItem";
 // Constants
-export const USER_API_ENDPOINT = "/api/UserData/GetAll?searchParameter=";
+
 
 interface Props {}
 
@@ -39,7 +40,7 @@ const UserList = ({}: Props) => {
 
     const usersData: UserData[] = data ? data : [];
     return (
-        <ul className="flex flex-col gap-2 mt-4 pr-2">
+        <ul className="flex flex-col gap-2 pr-2 mt-4">
             {usersData.map((user, idx) => (
                 <UserItem key={idx} user={user} searchBarValue={searchBarValue} />
             ))}

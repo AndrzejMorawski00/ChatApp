@@ -13,6 +13,7 @@ namespace Domain.UseCases.HubUseCases.EditChat
 {
     public class EditChatDBActionParameters : IRequest<EditChatDBActionResults>
     {
+        public required UserData User { get; set; }
         public required EditChatModel model { get; set; }
         public required List<int> ParticipantsToAdd { get; set; }
         public required List<int> ParticipantsToRemove { get; set; }
@@ -39,22 +40,39 @@ namespace Domain.UseCases.HubUseCases.EditChat
 
         public async Task<EditChatDBActionResults> Handle(EditChatDBActionParameters request, CancellationToken cancellationToken)
         {
+
             using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
-                var newParticipants = request.ParticipantsToAdd.Select(id => new ChatParticipant { ChatID = request.Chat.ID, UserID = id }).ToList();
+                var newParticipants = request.ParticipantsToAdd
+                    .Select(id => new ChatParticipant()
+                    {
+                        ChatID = request.Chat.ID,
+                        UserID = id
+                    })
+                    .ToList();
+
                 if ((newParticipants.Count + request.CurrentParticipants.Count - request.ParticipantsToRemove.Count) < MIN_CHAT_SIZE)
                 {
                     throw new Exception("Chat is too small");
                 }
-                await _dbContext.ChatParticipants.AddRangeAsync(newParticipants);
+
+                if (newParticipants.Any())
+                {
+                    await _dbContext.ChatParticipants.AddRangeAsync(newParticipants);
+                }
 
                 var participantsToRemoveEntities = await _dbContext.ChatParticipants
                                                                    .Where(cp => request.ParticipantsToRemove.Contains(cp.UserID) && cp.ChatID == request.Chat.ID)
                                                                    .ToListAsync();
-                _dbContext.ChatParticipants.RemoveRange(participantsToRemoveEntities);
-
-                request.Chat.ChatName = request.model.ChatName;
+                if (participantsToRemoveEntities.Any())
+                {
+                    _dbContext.ChatParticipants.RemoveRange(participantsToRemoveEntities);
+                }
+                if (request.model.ChatName != request.Chat.ChatName)
+                {
+                    request.Chat.ChatName = request.model.ChatName;
+                }
 
                 await _dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -65,11 +83,26 @@ namespace Domain.UseCases.HubUseCases.EditChat
                 throw;
             }
 
-            var removedParticipants = await _dbContext.ChatParticipants.Include(cp => cp.User).Where(cp => cp.ChatID == request.Chat.ID).Select(cp => cp.User).ToListAsync();
+            var removedParticipants = await _dbContext.UserData
+                                           .Where(u => request.ParticipantsToRemove.Contains(u.ID))
+                                           .ToListAsync();
 
-            var updatedParticipants = await _dbContext.ChatParticipants.Include(cp => cp.User).Where(cp => cp.ChatID == request.Chat.ID && !request.ParticipantsToAdd.Contains(cp.UserID)).Select(cp => cp.User).ToListAsync();
+            var addedParticipants = await _dbContext.UserData
+                                         .Where(u => request.ParticipantsToAdd.Contains(u.ID))
+                                         .ToListAsync(cancellationToken);
 
-            var addedParticipants = await _dbContext.ChatParticipants.Include(cp => cp.User).Where(cp => cp.ChatID == request.Chat.ID && request.ParticipantsToAdd.Contains(cp.UserID)).Select(cp => cp.User).ToListAsync();
+            var updatedParticipants = new List<UserData>();
+
+            if (request.model.ChatName != request.Chat.ChatName)
+            {
+                updatedParticipants = await _dbContext.ChatParticipants
+                    .Where(cp => cp.ChatID == request.Chat.ID && !request.ParticipantsToAdd.Contains(cp.UserID))
+                    .Select(cp => cp.User)
+                    .ToListAsync();
+            }
+
+            updatedParticipants.Add(request.User);
+
 
             return new EditChatDBActionResults()
             {

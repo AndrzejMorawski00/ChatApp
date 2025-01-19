@@ -13,8 +13,8 @@ export const refreshToken = async (): Promise<boolean> => {
             localStorage.setItem(ACCESS_TOKEN, accessToken);
             return true;
         } catch (error) {
-            console.error(`${REFRESH_TOKEN_ERROR_MESSAGE}. ${error}`);
             localStorage.clear();
+            console.error(`${REFRESH_TOKEN_ERROR_MESSAGE}. ${error}`);
             return false;
         }
     }

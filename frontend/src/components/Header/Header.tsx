@@ -1,4 +1,4 @@
-import { useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import useAppContext from "../../hooks/useAppContextHook";
 import ThemeSwitch from "../ThemeSwitch/ThemeSwitch";
 import HeaderLink from "./HeaderLink";
@@ -19,7 +19,7 @@ const Header = () => {
     return (
         <header className="flex items-center justify-between w-full pr-4 min-h-16">
             <div className="flex gap-2 ml-4">
-                <h1 className="mr-4 text-3xl tracking-wider text-textColor font-montserrat">ChatApp</h1>
+                <Link to='/' className="mr-4 text-3xl tracking-wider text-textColor font-montserrat linkStyles">ChatApp</Link>
                 <ThemeSwitch />
             </div>
             <div className="flex ">

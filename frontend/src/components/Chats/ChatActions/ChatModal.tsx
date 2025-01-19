@@ -16,7 +16,7 @@ const NewChatModal = ({buttonText, currentChat, buttonStyles} : Props) => {
 
 
     return <ReusableModal open={open} onOpenChange={(newOpen) => setOpen(newOpen)}>
-        <ReusableModal.Button asChild>
+        <ReusableModal.Button asChild >
             <button className={buttonStyles} onClick={() => setOpen(true)}>
                 {buttonText}
             </button>

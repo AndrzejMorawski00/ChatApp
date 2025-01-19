@@ -5,6 +5,7 @@ import { isValidLoginForm } from "../../utils/auth/isValidAuthForm";
 import { Link } from "react-router";
 import { LoginFormType } from "../../types/auth";
 import useLoginUser from "../../api/auth/useLoginUser";
+import Header from "../../components/Header/Header";
 
 // Constants
 const INITIAL_LOGIN_FORM: LoginFormType = {
@@ -40,11 +41,9 @@ const Register = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center w-screen h-screen gap-2">
-            <header>
-                <h2 className="mb-4 text-4xl tracking-wider text-textColor">Login User:</h2>
-            </header>
-            <form action="" onSubmit={handleFormSubmit} className="flex flex-col gap-2 mx-2 my-2">
+        <div className="flex flex-col items-center w-screen h-screen gap-2 x">
+            <Header/>
+            <form action="" onSubmit={handleFormSubmit} className="flex flex-col gap-2 mx-2 my-2 mt-10">
                 <div className="flex flex-col gap-2">
                     <label htmlFor="email" className="text-2xl tracking-wider text-textColor">
                         Email:

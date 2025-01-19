@@ -308,12 +308,28 @@ namespace ChatAppASPNET.Hubs
 
                 var userResponse = await _mediator.Send(new UserChatListResponseParameters() { User = authentication.User });
 
-                await _mediator.Publish(new EditChatNotification()
+                var chatOwnerResponse = await _mediator.Send(new UserChatListResponseParameters() { User = leaveChatResults.ChatOwner });
+
+                var userNotification = new UserNotification()
                 {
                     HubClients = Clients,
-                    User = authentication.User,
-                    ChatList = userResponse.ChatList,
-                });
+                    GroupName = authentication.User.Email,
+                    EventName = "EditChat",
+                    Message = "You left the chat.",
+                    MessageType = "success",
+                    MessagePayload = userResponse.ChatList,
+
+                };
+                var chatOwnerNotification = new UserNotification()
+                {
+                    HubClients = Clients,
+                    GroupName = leaveChatResults.ChatOwner.Email,
+                    EventName = "EditChat",
+                    MessagePayload = chatOwnerResponse.ChatList,
+
+                };
+                await _mediator.Publish(userNotification);
+                await _mediator.Publish(chatOwnerNotification);
             }
             catch (Exception ex)
             {
@@ -340,6 +356,8 @@ namespace ChatAppASPNET.Hubs
                 var deleteChatResponse = await _mediator.Send(new DeleteChatParameters() { ChatID = ChatID, User = authentication.User });
 
                 var userResponse = await _mediator.Send(new GenerateUserChatListResponseParameters() { User = authentication.User });
+
+
 
                 await _mediator.Publish(new UserNotification()
                 {
@@ -386,15 +404,58 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                var authentication = await _mediator.Send(new AuthenticateHubParameters() { Context = Context });
-                var getChatData = await _mediator.Send(new GetEditChatParameters() { model = model, User = authentication.User });
-                var dbResponseData = await _mediator.Send(new EditChatDBActionParameters() { Chat = getChatData.Chat, CurrentParticipants = getChatData.CurrentParticipants, FilteredUserIDs = getChatData.FilteredUserIDs, model = model, ParticipantsToAdd = getChatData.ParticipantsToAdd, ParticipantsToRemove = getChatData.ParticipantsToRemove });
+                var authentication = await _mediator.Send(new AuthenticateHubParameters() 
+                { 
+                    Context = Context 
+                });
 
-                await _mediator.Publish(new NotifyUsersNotification() { HubClients = Clients, ChatParticipants = dbResponseData.UpdatedParticipants, EventName = "EditChat", Message = "Chat has been updated.", MessageType = "info", User = authentication.User });
+                var getChatData = await _mediator.Send(new GetEditChatParameters() 
+                { 
+                    model = model, 
+                    User = authentication.User 
+                });
 
-                await _mediator.Publish(new NotifyUsersNotification() { HubClients = Clients, ChatParticipants = dbResponseData.AddedParticipants, EventName = "AddedToChat", Message = "info", MessageType = "You have been added to a chat.", User = authentication.User });
+                var dbResponseData = await _mediator.Send(new EditChatDBActionParameters() 
+                { 
+                    User=authentication.User,
+                    Chat = getChatData.Chat, 
+                    CurrentParticipants = getChatData.CurrentParticipants, 
+                    FilteredUserIDs = getChatData.FilteredUserIDs, 
+                    model = model, 
+                    ParticipantsToAdd = getChatData.ParticipantsToAdd, 
+                    ParticipantsToRemove = getChatData.ParticipantsToRemove 
+                });
 
-                await _mediator.Publish(new NotifyUsersNotification() { HubClients = Clients, ChatParticipants = dbResponseData.RemovedParticipants, EventName = "UserRemoved", Message = "You have been removed from a chat.", MessageType = "info", User = authentication.User });
+                await _mediator.Publish(new NotifyUsersNotification() 
+                { 
+                    HubClients = Clients, 
+                    ChatParticipants = dbResponseData.UpdatedParticipants, 
+                    EventName = "EditChat", 
+                    Message = "Chat has been updated.", 
+                    MessageType = "info", 
+                    //User = authentication.User 
+                });
+
+
+                await _mediator.Publish(new NotifyUsersNotification() 
+                { 
+                    HubClients = Clients, 
+                    ChatParticipants = dbResponseData.AddedParticipants, 
+                    EventName = "AddedToChat", 
+                    Message = "You have been added to a chat.", 
+                    MessageType = "info", 
+                    User = authentication.User 
+                });
+
+                await _mediator.Publish(new NotifyUsersNotification() 
+                { 
+                    HubClients = Clients, 
+                    ChatParticipants = dbResponseData.RemovedParticipants, 
+                    EventName = "UserRemoved", 
+                    Message = "You have been removed from a chat.",
+                    MessageType = "info", 
+                    User = authentication.User 
+                });
             }
             catch (Exception ex)
             {
@@ -466,7 +527,7 @@ namespace ChatAppASPNET.Hubs
                     Context = Context,
                     GroupName = dbResponse.GroupName,
                     EventName = "MessageSent",
-                    MessagePayload = chatResponse
+                    MessagePayload = chatResponse.ResponseMessage
                 });
             }
             catch (Exception ex)

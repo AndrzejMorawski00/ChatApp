@@ -34,15 +34,24 @@ namespace Domain.UseCases.HubUseCases.DeleteChat
         public async Task<DeleteChatResults> Handle(DeleteChatParameters request, CancellationToken cancellationToken)
         {
 
-            var chat = await _dbContext.Chats.FirstOrDefaultAsync(c => c.ID == request.ChatID && c.Owner == request.User.ID);
+            var chat = await _dbContext.Chats
+                .FirstOrDefaultAsync(c => c.ID == request.ChatID && c.Owner == request.User.ID);
             if (chat == null)
             {
                 throw new Exception("Failed to fetch chat");
             }
 
-            var messages = _dbContext.Messages.Where(m => m.ChatID == request.ChatID).ToList();
-            var chatParticipants = _dbContext.ChatParticipants.Include(c => c.User).Where(c => c.ChatID == request.ChatID).ToList();
-            var users = chatParticipants.Select(c => c.User).ToList();
+            var messages = _dbContext.Messages
+                .Where(m => m.ChatID == request.ChatID)
+                .ToList();
+            var chatParticipants = _dbContext.ChatParticipants
+                .Include(c => c.User)
+                .Where(c => c.ChatID == request.ChatID)
+                .ToList();
+
+            var users = chatParticipants
+                .Select(c => c.User)
+                .ToList();
 
             using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try

@@ -1,8 +1,8 @@
 import { API_MESSAGE_TYPE } from "../constants/ApiMessageStatus";
 
 export type NewApiStatusMessage = {
-    messageType: ApiMessageType;
-    message: string;
+    type: ApiMessageType;
+    content: string;
 };
 
 export type ApiStatusMessage = {
