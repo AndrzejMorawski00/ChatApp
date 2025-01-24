@@ -1,14 +1,9 @@
-﻿using Domain.Models;
-using Domain.Models.CommonModels;
+﻿using Domain.Models.CommonModels;
 using Infrastructure.DBContext;
-using Infrastructure.Entities;
+using Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using static Domain.Utils;
 
 namespace Domain.UseCases.Common
@@ -43,21 +38,23 @@ namespace Domain.UseCases.Common
                  ID = c.ID,
                  ChatType = (int)c.ChatType,
                  ChatName = GetChatName(request.User, c),
-                 Owner = c.Owner,
-                 IsOwner = c.Owner == request.User.ID,
-                 ChatParticipants = c.Participants.Select(p => new ChatParticipantModel
+                 Owner = (c.OwnerID ?? 0),
+                 IsOwner = c.OwnerID == request.User.ID,
+                 ChatParticipants = c.Participants
+                 .Select(p => new ChatParticipantModel
                  {
                      ID = p.UserID,
-                     FirstName = p.User.FirstName,
-                     LastName = p.User.LastName
+                     FirstName = p.User != null ? p.User.FirstName : string.Empty,
+                     LastName = p.User != null ? p.User.LastName : string.Empty
                  })
-                     .ToList()
+                 .ToList()
              })
-             .ToListAsync();
+             .ToListAsync(cancellationToken);
 
-            return new UserChatListResponseResults() { ChatList = userChats };
+            return new UserChatListResponseResults
+            {
+                ChatList = userChats
+            };
         }
-
-
     }
 }

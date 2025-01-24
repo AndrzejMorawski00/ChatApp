@@ -1,12 +1,4 @@
-﻿using Domain.Models;
-using Infrastructure.DBContext;
-using Infrastructure.Entities;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Entities;
 
 namespace Domain
 {
@@ -25,17 +17,16 @@ namespace Domain
             var p1 = chat.Participants.FirstOrDefault(cp => cp.UserID == user.ID);
             var p2 = chat.Participants.FirstOrDefault(cp => cp.UserID != user.ID);
 
-            if (p1 != null)
+            if (p1 != null && p1.User != null)
             {
-                return p2.User.FirstName;
+                return p2?.User?.FirstName ?? chat.ChatName;
             }
-            if (p2 != null)
+
+            if (p2 != null && p2.User != null)
             {
                 return p2.User.FirstName;
             }
             return chat.ChatName;
         }
     }
-
-   
 }

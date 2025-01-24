@@ -1,4 +1,4 @@
-﻿using Domain.UseCases.APIUseCases.Common;
+﻿using Domain.UseCases.APIUseCases;
 using Domain.UseCases.Common;
 using Infrastructure.DBContext;
 using MediatR;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 
-namespace ChatAppASPNET.Controllers.API
+namespace ChatApp.Controllers.API
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -17,6 +17,9 @@ namespace ChatAppASPNET.Controllers.API
     {
         private readonly AppDBContext _dbContext;
         private readonly IMediator _mediator;
+
+        private const string GenericErrorMessage = "Something went wrong...";
+        private const string UserEmailErrorMessage = "Couldn't get user email";
 
 
         public UserDataController(AppDBContext dbContext, IMediator mediator)
@@ -31,16 +34,28 @@ namespace ChatAppASPNET.Controllers.API
         {
             try
             {
-                var userEmail = User.FindFirst(ClaimTypes.Email)?.Value!;
-                var user = await _mediator.Send(new GetUserModelParameters() { UserEmail = userEmail });
+                var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
 
-                var userProfiles = await _mediator.Send(new GetUserListResponseParameters() { User=user.User, SearchParameter = searchParameter});
+                if (userEmail == null)
+                {
+                    return BadRequest(UserEmailErrorMessage);
+                }
+                var user = await _mediator.Send(new GetUserModelParameters
+                {
+                    UserEmail = userEmail
+                });
+
+                var userProfiles = await _mediator.Send(new GetUserListResponseParameters
+                {
+                    User = user.User,
+                    SearchParameter = searchParameter
+                });
 
                 return Ok(userProfiles.Users);
             }
             catch (Exception ex)
             {
-                var errorMessage = ex.Message ?? "Something went wrong...";
+                var errorMessage = ex.Message ?? GenericErrorMessage;
                 return BadRequest(ex.Message);
             }
         }

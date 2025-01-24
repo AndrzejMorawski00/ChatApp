@@ -1,27 +1,35 @@
-﻿using Domain.Handlers.APIHandlers.AuthController.cs;
+﻿using Domain.Handlers.APIHandlers;
 using Domain.Models.APIModels;
-using Domain.UseCases.APIUseCases.AuthController;
-using Domain.UseCases.APIUseCases.Common;
+using Domain.UseCases.APIUseCases;
 using Infrastructure.DBContext;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Domain;
 
-
-namespace ChatAppASPNET.Controllers.API
+namespace ChatApp.Controllers.API
 {
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
 
-        private readonly IConfiguration _config;
         private readonly AppDBContext _dbContext;
         private readonly JwtHandler _jwtHandler;
-        private static int hashingRounds = 16;
-        private static int AccessTokenExpirationTime = 120;
-        private static int RefreshTokenExpirationTime = 1440;
+        private readonly IConfiguration _config;
         private readonly IMediator _mediator;
+        private const int hashingRounds = 16;
+        private const int AccessTokenExpirationTime = 120;
+        private const int RefreshTokenExpirationTime = 1440;
+
+        private const string RegistrationFailureMessage = "Failed to create an account.";
+        private const string RefreshTokenRequiredMessage = "Refresh token is required.";
+        private const string RegistrationSuccessMessage = "Registration successful.";
+        private const string PasswordMismatchMessage = "Passwords do not match!";
+        private const string InvalidModelStateMessage = "Invalid model state.";
+        private const string GenericErrorMessage = "Something went wrong...";
+        private const string EmailTakenMessage = "Email is already taken.";
+
 
         public AuthController(AppDBContext dbContext, IConfiguration config, JwtHandler jwtHandler, IMediator mediator)
         {
@@ -43,20 +51,24 @@ namespace ChatAppASPNET.Controllers.API
 
                 if (model.Password != model.RepeatPassword)
                 {
-                    return BadRequest("Password do not match!");
+                    return BadRequest(PasswordMismatchMessage);
                 }
 
-                if (await _dbContext.UserData.AnyAsync(u => u.Email == model.Email))
+                if (await _dbContext.UserData
+                    .AnyAsync(u => u.Email == model.Email))
                 {
-                    return BadRequest("Email is taken");
+                    return BadRequest(EmailTakenMessage);
                 }
 
-                await _mediator.Publish(new RegisterUserNotification() { model = model });
-                return Ok("Registration successful.");
+                await _mediator.Publish(new RegisterUserNotification
+                {
+                    model = model
+                });
+                return Ok(RegistrationSuccessMessage);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return BadRequest("Failed to create an account");
+                return BadRequest(RegistrationFailureMessage);
             }
         }
 
@@ -71,17 +83,32 @@ namespace ChatAppASPNET.Controllers.API
                     return BadRequest(ModelState);
                 }
 
-                var user = await _mediator.Send(new AuthenticateUserParameters() { model = model });
+                var user = await _mediator.Send(new AuthenticateUserParameters
+                {
+                    model = model
+                });
 
-                var accessToken = await _mediator.Send(new ObtainTokenParameters() { User = user.User, ExpirationTime = AccessTokenExpirationTime });
+                var accessToken = await _mediator.Send(new ObtainTokenParameters
+                {
+                    User = user.User,
+                    ExpirationTime = AccessTokenExpirationTime
+                });
 
-                var refreshToken = await _mediator.Send(new ObtainTokenParameters() { User = user.User, ExpirationTime = RefreshTokenExpirationTime });
+                var refreshToken = await _mediator.Send(new ObtainTokenParameters
+                {
+                    User = user.User,
+                    ExpirationTime = RefreshTokenExpirationTime
+                });
 
-                return Ok(new { AccessToken = accessToken.Token, RefreshToken = refreshToken.Token });
+                return Ok(new
+                {
+                    AccessToken = accessToken.Token,
+                    RefreshToken = refreshToken.Token
+                });
             }
             catch (Exception ex)
             {
-                var errorMessage = ex.Message ?? "Something went wrong...";
+                var errorMessage = ex.Message ?? GenericErrorMessage;
                 return BadRequest(errorMessage);
             }
         }
@@ -93,17 +120,26 @@ namespace ChatAppASPNET.Controllers.API
             {
                 if (string.IsNullOrEmpty(model.RefreshToken))
                 {
-                    return BadRequest("Refresh token is required.");
+                    return BadRequest(InvalidModelStateMessage);
                 }
 
-                var token = await _mediator.Send(new RefreshTokenParameters() { model = model, TokenExpirationTime = AccessTokenExpirationTime });
-                return Ok(new { AccessToken = token });
+                var token = await _mediator.Send(new RefreshTokenParameters
+                {
+                    model = model,
+                    TokenExpirationTime = AccessTokenExpirationTime
+                });
+                return Ok(new
+                {
+                    AccessToken = token
+                });
             }
             catch (Exception ex)
             {
-                var errorMessage = ex.Message ?? "Something went wrong...";
+                var errorMessage = ex.Message ?? GenericErrorMessage;
                 return Unauthorized(errorMessage);
             }
         }
     }
 }
+
+

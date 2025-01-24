@@ -4,29 +4,46 @@ using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using MediatR;
 using Domain.UseCases.Common;
-using Domain.UseCases.HubUseCases.Common;
-using Domain.UseCases.HubUseCases.AddFriend;
-using Domain.UseCases.HubUseCases.AcceptFriend;
-using Domain.UseCases.HubUseCases.RemoveFriend; 
-using Domain.UseCases.HubUseCases.CreateNewChat;
-using Domain.UseCases.HubUseCases.LeaveChat;
-using Domain.Handlers.HubHandlers.Common;
-using Domain.UseCases.HubUseCases.DeleteChat;
-using Domain.UseCases.HubUseCases.EditChat;
-using Domain.Handlers.HubHandlers.JoinGroup;
-using Domain.UseCases.HubUseCases.SendMessage;
-using Domain.Handlers.HubHandlers.SendMessage;
 using Domain.Models.HubModels;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Domain.UseCases.HubUseCases;
+using Domain.Handlers.HubHandlers;
 
-namespace ChatAppASPNET.Hubs
+
+namespace ChatApp.Hubs
 {
     [Authorize]
     public class ChatHub : Hub
     {
-        private readonly static int MIN_CHAT_SIZE = 1;
         private readonly IMediator _mediator;
-        private static string GenericErrorMessage = "Something went wrong...";
+
+        // Messages
+        private const string GenericErrorMessage = "Something went wrong...";
+        private const string FriendshipAcceptedMessage = "Friendship has been accepted.";
+        private const string FriendshipRequrestReceivedMessage = "New friendship request received";
+        private const string FriendshipCanceledMessage = "Friendship has been cancelled.";
+        private const string AddedToChatMessage = "You have been added to a chat.";
+        private const string ChatCreatedMessage = "Chat Created Successfully.";
+        private const string YouLeftChatMessage = "You left the chat.";
+        private const string ChatDeletedMessage = "Chat has been deleted.";
+        private const string ChatUpdatedMessage = "Chat has been updated.";
+        private const string RemovedFromChatMessage = "You have been removed from a chat.";
+
+        // SignalR Events
+        private const string ConnectedEvent = "Connected";
+        private const string FriendshipRequestReceivedEvent = "FriendshipRequestReceived";
+        private const string FriendshipAcceptedEvent = "FriendshipAccepted";
+        private const string FriendshipCancelledEvent = "FriendshipCancelled";
+        private const string AddedToChatEvent = "AddedToChat";
+        private const string EditChatEvent = "EditChat";
+        private const string ChatDeletedEvent = "ChatDeleted";
+        private const string UserRemovedEvent = "UserRemoved";
+        private const string MessageSentEvent = "MessageSent";
+
+        // Message Types
+        private const string InfoMessageType = "info";
+        private const string ErrorMessageType = "error";
+        private const string SuccessMessageType = "success";
+
 
         public ChatHub(IMediator mediator)
         {
@@ -44,7 +61,7 @@ namespace ChatAppASPNET.Hubs
                     var clientId = Context?.ConnectionId;
 
                     await Groups.AddToGroupAsync(clientId!, userEmail);
-                    await Clients.Groups(userEmail).SendAsync("Connected");
+                    await Clients.Groups(userEmail).SendAsync(ConnectedEvent);
                 }
             }
             catch (Exception ex)
@@ -58,41 +75,68 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                var authentication = await _mediator.Send(new AuthenticateHubParameters() { Context = Context });
-
+                var authentication = await _mediator.Send(new AuthenticateHubParameters
+                {
+                    Context = Context
+                });
                 var user = authentication.User;
 
-                var newFriendship = await _mediator.Send(new CreateFriendshipUseCaseParameters() { FriendEmail = friendEmail, UserEmail = user.Email });
-                var userUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters() { User = user });
+                var newFriendship = await _mediator.Send(
+                    new CreateFriendshipUseCaseParameters
+                    {
+                        FriendEmail = friendEmail,
+                        UserEmail = user.Email
+                    });
 
-                var userResponse = await _mediator.Send(new GenerateFriendshipResponseParameters() { User = user });
-
-                var friendResponse = await _mediator.Send(new GenerateFriendshipResponseParameters() { User = newFriendship.Friend });
-                var friendUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters() { User = newFriendship.Friend });
-
-                var userNotification = new UserNotification()
+                var userUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters
+                {
+                    User = user,
+                    SearchParameter = "",
+                });
+                var userResponse = await _mediator.Send(new GenerateFriendshipResponseParameters
+                {
+                    User = user
+                });
+                var userNotification = new MessageSenderNotification
                 {
                     HubClients = Clients,
                     GroupName = user.Email,
-                    EventName = "FriendshipRequestReceived",
-                    MessagePayload = new UserFriendshipResponseModel()
+                    EventName = FriendshipRequestReceivedEvent,
+                    MessageData = new NotificationModel
                     {
-                        Users = userUnrelatedUsers.Users,
-                        Friendships = userResponse.FriendshipResponseModel
+                        MessageType = null,
+                        MessageContent = null,
+                        MessagePayload = new UserFriendshipResponseModel
+                        {
+                            Users = userUnrelatedUsers.Users,
+                            Friendships = userResponse.FriendshipResponseModel
+                        }
                     }
                 };
 
-                var friendNotification = new UserNotification()
+                var friendUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters
+                {
+                    User = newFriendship.Friend,
+                    SearchParameter = ""
+                });
+                var friendResponse = await _mediator.Send(new GenerateFriendshipResponseParameters
+                {
+                    User = newFriendship.Friend
+                });
+                var friendNotification = new MessageSenderNotification
                 {
                     HubClients = Clients,
                     GroupName = newFriendship.Friend.Email,
-                    EventName = "FriendshipRequestReceived",
-                    Message = "New friendship request received",
-                    MessageType = "info",
-                    MessagePayload = new UserFriendshipResponseModel()
+                    EventName = FriendshipRequestReceivedEvent,
+                    MessageData = new NotificationModel
                     {
-                        Users = friendUnrelatedUsers.Users,
-                        Friendships = friendResponse.FriendshipResponseModel
+                        MessageType = InfoMessageType,
+                        MessageContent = FriendshipRequrestReceivedMessage,
+                        MessagePayload = new UserFriendshipResponseModel
+                        {
+                            Users = friendUnrelatedUsers.Users,
+                            Friendships = friendResponse.FriendshipResponseModel
+                        }
                     }
                 };
 
@@ -101,19 +145,12 @@ namespace ChatAppASPNET.Hubs
             }
             catch (Exception ex)
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
-                if (string.IsNullOrEmpty(userEmail))
+                await _mediator.Send(new ErrorNotification
                 {
-                    throw;
-                }
-                var errorNotification = new ErrorNotification()
-                {
+                    Context = Context,
                     HubClients = Clients,
-                    GroupName = userEmail,
                     ex = ex,
-                };
-
-                await _mediator.Publish(errorNotification);
+                });
             }
         }
 
@@ -121,45 +158,53 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                var data = await _mediator.Send(new ValidateFriendshipUseCaseParameters()
+                var data = await _mediator.Send(new ValidateFriendshipUseCaseParameters
                 {
                     Context = Context,
                     friendshipID = friendshipID
                 });
 
-                var acceptedFriendship = await _mediator.Send(new AcceptFriendshipParameters()
+                var acceptedFriendship = await _mediator.Send(new AcceptFriendshipParameters
                 {
                     Sender = data.Sender,
                     Receiver = data.Receiver,
                     Friendship = data.Friendship,
                 });
 
-                var acceptFriendSenderResponse = await _mediator.Send(new GenerateFriendshipResponseParameters()
+                var acceptFriendSenderResponse = await _mediator.Send(new GenerateFriendshipResponseParameters
                 {
                     User = data.Sender,
                 });
 
-                var acceptFriendReceiverResponse = await _mediator.Send(new GenerateFriendshipResponseParameters()
+                var acceptFriendReceiverResponse = await _mediator.Send(new GenerateFriendshipResponseParameters
                 {
                     User = data.Sender,
                 });
 
-                var senderNotification = new UserNotification()
+                var senderNotification = new MessageSenderNotification
                 {
                     HubClients = Clients,
                     GroupName = data.Sender.Email,
-                    EventName = "FriendshipAccepted",
-                    MessagePayload = acceptFriendSenderResponse.FriendshipResponseModel,
+                    EventName = FriendshipAcceptedEvent,
+                    MessageData = new NotificationModel
+                    {
+                        MessageType = null,
+                        MessageContent = null,
+                        MessagePayload = acceptFriendSenderResponse.FriendshipResponseModel,
+                    }
                 };
 
-                var receiverNotification = new UserNotification()
+                var receiverNotification = new MessageSenderNotification
                 {
                     HubClients = Clients,
                     GroupName = data.Receiver.Email,
-                    EventName = "FriendshipAccepted",
-                    Message = "Friendship has been accepted.",
-                    MessageType = "info",
-                    MessagePayload = acceptFriendSenderResponse.FriendshipResponseModel,
+                    EventName = FriendshipAcceptedEvent,
+                    MessageData = new NotificationModel
+                    {
+                        MessageContent = FriendshipAcceptedMessage,
+                        MessageType = InfoMessageType,
+                        MessagePayload = acceptFriendSenderResponse.FriendshipResponseModel,
+                    }
                 };
 
                 await _mediator.Publish(senderNotification);
@@ -167,18 +212,12 @@ namespace ChatAppASPNET.Hubs
             }
             catch (Exception ex)
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
-                if (string.IsNullOrEmpty(userEmail))
+                await _mediator.Send(new ErrorNotification
                 {
-                    throw;
-                }
-                var errorNotification = new ErrorNotification()
-                {
+                    Context = Context,
                     HubClients = Clients,
-                    GroupName = userEmail,
                     ex = ex,
-                };
-                await _mediator.Publish(errorNotification);
+                });
             }
         }
 
@@ -186,46 +225,67 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                var authentication = await _mediator.Send(new AuthenticateHubParameters()
+                var authentication = await _mediator.Send(new AuthenticateHubParameters
                 {
                     Context = Context,
                 });
 
-                var friendshipResponse = await _mediator.Send(new RemoveFriendshipParameters()
+                var friendshipResponse = await _mediator.Send(new RemoveFriendshipParameters
                 {
                     FriendshipID = friendshipID,
                     User = authentication.User,
                 });
 
-                var userResponse = await _mediator.Send(new GenerateFriendshipResponseParameters() { User = authentication.User });
-                var userUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters() { User = authentication.User });
+                var userResponse = await _mediator.Send(new GenerateFriendshipResponseParameters
+                {
+                    User = authentication.User
+                });
+                var userUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters
+                {
+                    User = authentication.User,
+                    SearchParameter = ""
+                });
 
-                var friendResponse = await _mediator.Send(new GenerateFriendshipResponseParameters() { User = friendshipResponse.Friend });
-                var friendUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters() { User = friendshipResponse.Friend });
-
-                var userNotification = new UserNotification()
+                var userNotification = new MessageSenderNotification
                 {
                     HubClients = Clients,
                     GroupName = authentication.User.Email,
-                    EventName = "FriendshipCancelled",
-                    MessagePayload = new UserFriendshipResponseModel()
+                    EventName = FriendshipCancelledEvent,
+                    MessageData = new NotificationModel
                     {
-                        Users = userUnrelatedUsers.Users,
-                        Friendships = userResponse.FriendshipResponseModel,
+                        MessageType = null,
+                        MessageContent = null,
+                        MessagePayload = new UserFriendshipResponseModel
+                        {
+                            Users = userUnrelatedUsers.Users,
+                            Friendships = userResponse.FriendshipResponseModel
+                        }
                     }
                 };
 
-                var friendNotification = new UserNotification()
+                var friendResponse = await _mediator.Send(new GenerateFriendshipResponseParameters
+                {
+                    User = friendshipResponse.Friend
+                });
+                var friendUnrelatedUsers = await _mediator.Send(new GetUserListResponseParameters
+                {
+                    User = friendshipResponse.Friend,
+                    SearchParameter = ""
+                });
+                var friendNotification = new MessageSenderNotification
                 {
                     HubClients = Clients,
                     GroupName = friendshipResponse.Friend.Email,
-                    EventName = "FriendshipCancelled",
-                    Message = "Friendship has been cancelled.",
-                    MessageType = "info",
-                    MessagePayload = new UserFriendshipResponseModel()
+                    EventName = FriendshipCancelledEvent,
+                    MessageData = new NotificationModel
                     {
-                        Users = friendUnrelatedUsers.Users,
-                        Friendships = friendResponse.FriendshipResponseModel
+                        MessageType = InfoMessageType,
+                        MessageContent = FriendshipCanceledMessage,
+                        MessagePayload = new UserFriendshipResponseModel
+                        {
+                            Users = friendUnrelatedUsers.Users,
+                            Friendships = friendResponse.FriendshipResponseModel
+                        }
                     }
                 };
 
@@ -234,18 +294,12 @@ namespace ChatAppASPNET.Hubs
             }
             catch (Exception ex)
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
-                if (string.IsNullOrEmpty(userEmail))
+                await _mediator.Send(new ErrorNotification
                 {
-                    throw;
-                }
-                var errorNotification = new ErrorNotification()
-                {
+                    Context = Context,
                     HubClients = Clients,
-                    GroupName = userEmail,
                     ex = ex,
-                };
-                await _mediator.Publish(errorNotification);
+                });
             }
         }
 
@@ -253,49 +307,52 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                var authentication = await _mediator.Send(new AuthenticateHubParameters()
+                var authentication = await _mediator.Send(new AuthenticateHubParameters
                 {
                     Context = Context,
                 });
 
-                var newChatResponse = await _mediator.Send(new CreateNewChatParameters() { ChatName = model.ChatName, ParticipantIDList = model.ParticipantsID, User = authentication.User });
-
-                var userResponse = await _mediator.Send(new GenerateUserChatListResponseParameters() { User = authentication.User });
-
-                await _mediator.Publish(new UserNotification()
+                var newChatResponse = await _mediator.Send(new CreateNewChatParameters
                 {
-                    EventName = "EditChat",
-                    GroupName = authentication.User.Email,
-                    HubClients = Clients,
-                    Message = "Chat Created Successfully.",
-                    MessageType = "success",
-                    MessagePayload = userResponse.UserResponse
+                    ChatName = model.ChatName,
+                    ParticipantIDList = model.ParticipantsID,
+                    User = authentication.User
                 });
 
-                await _mediator.Publish(new NotifyUsersNotification()
+                var userResponse = await _mediator.Send(new GenerateUserChatListResponseParameters
+                {
+                    User = authentication.User
+                });
+
+                var newGroupMessage = new GroupMessageNotification
                 {
                     HubClients = Clients,
+                    GroupEventName = AddedToChatEvent,
                     ChatParticipants = newChatResponse.Users,
+                    GroupMessage = new NotificationModel
+                    {
+                        MessageType = InfoMessageType,
+                        MessageContent = AddedToChatMessage,
+                        MessagePayload = null,
+                    },
                     User = authentication.User,
-                    EventName = "AddedToChat",
-                    Message = "You have been added to a chat.",
-                    MessageType = "info",
-                });
+                    UserEventName = EditChatEvent,
+                    UserMessage = new NotificationModel
+                    {
+                        MessageType = SuccessMessageType,
+                        MessageContent = ChatCreatedMessage,
+                        MessagePayload = userResponse.UserResponse,
+                    },
+                };
             }
             catch (Exception ex)
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
-                if (string.IsNullOrEmpty(userEmail))
+                await _mediator.Send(new ErrorNotification
                 {
-                    throw;
-                }
-                var errorNotification = new ErrorNotification()
-                {
+                    Context = Context,
                     HubClients = Clients,
-                    GroupName = userEmail,
                     ex = ex,
-                };
-                await _mediator.Publish(errorNotification);
+                });
             }
         }
 
@@ -303,100 +360,117 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                var authentication = await _mediator.Send(new AuthenticateHubParameters() { Context = Context, });
-                var leaveChatResults = await _mediator.Send(new LeaveChatParameters() { ChatID = ChatID, User = authentication.User });
+                var authentication = await _mediator.Send(new AuthenticateHubParameters
+                {
+                    Context = Context,
+                });
+                var leaveChatResults = await _mediator.Send(new LeaveChatParameters
+                {
+                    ChatID = ChatID,
+                    User = authentication.User
+                });
 
-                var userResponse = await _mediator.Send(new UserChatListResponseParameters() { User = authentication.User });
+                var userResponse = await _mediator.Send(new UserChatListResponseParameters
+                {
+                    User = authentication.User
+                });
 
-                var chatOwnerResponse = await _mediator.Send(new UserChatListResponseParameters() { User = leaveChatResults.ChatOwner });
+                var chatOwnerResponse = await _mediator.Send(new UserChatListResponseParameters
+                {
+                    User = leaveChatResults.ChatOwner
+                });
 
-                var userNotification = new UserNotification()
+                var userNotification = new MessageSenderNotification
                 {
                     HubClients = Clients,
                     GroupName = authentication.User.Email,
-                    EventName = "EditChat",
-                    Message = "You left the chat.",
-                    MessageType = "success",
-                    MessagePayload = userResponse.ChatList,
-
+                    EventName = EditChatEvent,
+                    MessageData = new NotificationModel
+                    {
+                        MessageType = SuccessMessageType,
+                        MessageContent = YouLeftChatMessage,
+                        MessagePayload = userResponse.ChatList,
+                    }
                 };
-                var chatOwnerNotification = new UserNotification()
+                var chatOwnerNotification = new MessageSenderNotification()
                 {
                     HubClients = Clients,
                     GroupName = leaveChatResults.ChatOwner.Email,
-                    EventName = "EditChat",
-                    MessagePayload = chatOwnerResponse.ChatList,
-
+                    EventName = EditChatEvent,
+                    MessageData = new NotificationModel
+                    {
+                        MessageType = null,
+                        MessageContent = null,
+                        MessagePayload = chatOwnerResponse.ChatList,
+                    }
                 };
+
                 await _mediator.Publish(userNotification);
                 await _mediator.Publish(chatOwnerNotification);
             }
             catch (Exception ex)
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
-                if (string.IsNullOrEmpty(userEmail))
+                await _mediator.Send(new ErrorNotification
                 {
-                    throw;
-                }
-                var errorNotification = new ErrorNotification()
-                {
+                    Context = Context,
                     HubClients = Clients,
-                    GroupName = userEmail,
                     ex = ex,
-                };
-                await _mediator.Publish(errorNotification);
+                });
             }
         }
         public async Task DeleteChat(int ChatID)
         {
             try
             {
-                var authentication = await _mediator.Send(new AuthenticateHubParameters() { Context = Context });
-
-                var deleteChatResponse = await _mediator.Send(new DeleteChatParameters() { ChatID = ChatID, User = authentication.User });
-
-                var userResponse = await _mediator.Send(new GenerateUserChatListResponseParameters() { User = authentication.User });
-
-
-
-                await _mediator.Publish(new UserNotification()
+                var authentication = await _mediator.Send(new AuthenticateHubParameters
                 {
-                    EventName = "ChatDeleted",
-                    GroupName = authentication.User.Email,
-                    HubClients = Clients,
-                    Message = "Chat has been deleted.",
-                    MessageType = "success",
-                    MessagePayload = new
-                    {
-                        chatID= ChatID,
-                        UserChatList= userResponse.UserResponse
-                    }
+                    Context = Context
                 });
 
-                await _mediator.Publish(new NotifyUsersNotification()
+                var deleteChatResponse = await _mediator.Send(new DeleteChatParameters
+                {
+                    ChatID = ChatID,
+                    User = authentication.User
+                });
+
+                var userResponse = await _mediator.Send(new GenerateUserChatListResponseParameters
+                {
+                    User = authentication.User
+                });
+
+                await _mediator.Publish(new GroupMessageNotification
                 {
                     HubClients = Clients,
-                    User = authentication.User,
+                    GroupEventName = ChatDeletedEvent,
                     ChatParticipants = deleteChatResponse.ChatParticipants,
-                    EventName = "ChatDeleted",
-                    Message = "Chat has been deleted.",
-                    MessageType = "info"
+                    GroupMessage = new NotificationModel
+                    {
+                        MessageType = InfoMessageType,
+                        MessageContent = ChatDeletedMessage,
+                        MessagePayload = null,
+                    },
+                    User = authentication.User,
+                    UserEventName = ChatDeletedEvent,
+                    UserMessage = new NotificationModel
+                    {
+                        MessageType = SuccessMessageType,
+                        MessageContent = ChatDeletedMessage,
+                        MessagePayload = new
+                        {
+                            chatID = ChatID,
+                            UserChatList = userResponse.UserResponse
+                        }
+                    }
                 });
             }
             catch (Exception ex)
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
-                if (string.IsNullOrEmpty(userEmail))
+                await _mediator.Send(new ErrorNotification
                 {
-                    throw;
-                }
-                var errorNotification = new ErrorNotification()
-                {
+                    Context = Context,
                     HubClients = Clients,
-                    GroupName = userEmail,
                     ex = ex,
-                };
-                await _mediator.Publish(errorNotification);
+                });
             }
         }
 
@@ -404,73 +478,94 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                var authentication = await _mediator.Send(new AuthenticateHubParameters() 
-                { 
-                    Context = Context 
+                var authentication = await _mediator.Send(new AuthenticateHubParameters
+                {
+                    Context = Context
                 });
 
-                var getChatData = await _mediator.Send(new GetEditChatParameters() 
-                { 
-                    model = model, 
-                    User = authentication.User 
+                var getChatData = await _mediator.Send(new GetEditChatParameters
+                {
+                    model = model,
+                    User = authentication.User
                 });
 
-                var dbResponseData = await _mediator.Send(new EditChatDBActionParameters() 
-                { 
-                    User=authentication.User,
-                    Chat = getChatData.Chat, 
-                    CurrentParticipants = getChatData.CurrentParticipants, 
-                    FilteredUserIDs = getChatData.FilteredUserIDs, 
-                    model = model, 
-                    ParticipantsToAdd = getChatData.ParticipantsToAdd, 
-                    ParticipantsToRemove = getChatData.ParticipantsToRemove 
+                var dbResponseData = await _mediator.Send(new EditChatDBActionParameters
+                {
+                    User = authentication.User,
+                    Chat = getChatData.Chat,
+                    CurrentParticipants = getChatData.CurrentParticipants,
+                    FilteredUserIDs = getChatData.FilteredUserIDs,
+                    model = model,
+                    ParticipantsToAdd = getChatData.ParticipantsToAdd,
+                    ParticipantsToRemove = getChatData.ParticipantsToRemove
                 });
 
-                await _mediator.Publish(new NotifyUsersNotification() 
-                { 
-                    HubClients = Clients, 
-                    ChatParticipants = dbResponseData.UpdatedParticipants, 
-                    EventName = "EditChat", 
-                    Message = "Chat has been updated.", 
-                    MessageType = "info", 
-                    //User = authentication.User 
+                //await _mediator.Publish(new NotifyUsersNotification()
+                //{
+                //    HubClients = Clients,
+                //    ChatParticipants = dbResponseData.UpdatedParticipants,
+                //    EventName = "EditChat",
+                //    Message = "Chat has been updated.",
+                //    MessageType = "info",
+                //    //User = authentication.User 
+                //});
+
+                await _mediator.Publish(new GroupMessageNotification
+                {
+                    HubClients = Clients,
+                    GroupEventName = EditChatEvent,
+                    ChatParticipants = dbResponseData.UpdatedParticipants,
+                    GroupMessage = new NotificationModel
+                    {
+                        MessageType = InfoMessageType,
+                        MessageContent = ChatDeletedMessage,
+                        MessagePayload = null,
+                    },
+                    User = null,
+                    UserEventName = null,
+                    UserMessage = null,
                 });
 
-
-                await _mediator.Publish(new NotifyUsersNotification() 
-                { 
-                    HubClients = Clients, 
-                    ChatParticipants = dbResponseData.AddedParticipants, 
-                    EventName = "AddedToChat", 
-                    Message = "You have been added to a chat.", 
-                    MessageType = "info", 
-                    User = authentication.User 
+                await _mediator.Publish(new GroupMessageNotification
+                {
+                    HubClients = Clients,
+                    GroupEventName = AddedToChatEvent,
+                    ChatParticipants = dbResponseData.AddedParticipants,
+                    GroupMessage = new NotificationModel
+                    {
+                        MessageType = InfoMessageType,
+                        MessageContent = AddedToChatMessage,
+                        MessagePayload = null,
+                    },
+                    User = null,
+                    UserEventName = null,
+                    UserMessage = null,
                 });
 
-                await _mediator.Publish(new NotifyUsersNotification() 
-                { 
-                    HubClients = Clients, 
-                    ChatParticipants = dbResponseData.RemovedParticipants, 
-                    EventName = "UserRemoved", 
-                    Message = "You have been removed from a chat.",
-                    MessageType = "info", 
-                    User = authentication.User 
+                await _mediator.Publish(new GroupMessageNotification
+                {
+                    HubClients = Clients,
+                    GroupEventName = UserRemovedEvent,
+                    ChatParticipants = dbResponseData.RemovedParticipants,
+                    GroupMessage = new NotificationModel
+                    {
+                        MessageType = InfoMessageType,
+                        MessageContent = RemovedFromChatMessage,
+                        MessagePayload = null,
+                    },
+                    User = null,
+                    UserEventName = null,
+                    UserMessage = null,
                 });
             }
             catch (Exception ex)
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
-                if (string.IsNullOrEmpty(userEmail))
+                await _mediator.Send(new ErrorNotification
                 {
-                    throw;
-                }
-                var errorNotification = new ErrorNotification()
-                {
+                    Context = Context,
                     HubClients = Clients,
-                    GroupName = userEmail,
                     ex = ex,
-                };
-                await _mediator.Publish(errorNotification);
+                });
             }
         }
 
@@ -479,7 +574,7 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                await _mediator.Publish(new JoinGroupNotification()
+                await _mediator.Publish(new JoinGroupNotification
                 {
                     Context = Context,
                     ChatID = groupID,
@@ -488,18 +583,12 @@ namespace ChatAppASPNET.Hubs
             }
             catch (Exception ex)
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
-                if (string.IsNullOrEmpty(userEmail))
+                await _mediator.Send(new ErrorNotification
                 {
-                    throw;
-                }
-                var errorNotification = new ErrorNotification()
-                {
+                    Context = Context,
                     HubClients = Clients,
-                    GroupName = userEmail,
                     ex = ex,
-                };
-                await _mediator.Publish(errorNotification);
+                });
             }
         }
 
@@ -507,43 +596,62 @@ namespace ChatAppASPNET.Hubs
         {
             try
             {
-                var authentication = await _mediator.Send(new AuthenticateHubParameters() { Context = Context });
-                var dbResponse = await _mediator.Send(new AddNewMessageParameters() { model = model, User = authentication.User });
-
-                var userResponse = await _mediator.Send(new GenerateNewMessageParameters() { IsOwner = true, Message = dbResponse.Message });
-                var chatResponse = await _mediator.Send(new GenerateNewMessageParameters() { IsOwner = false, Message = dbResponse.Message });
-
-                await _mediator.Publish(new UserNotification()
+                var authentication = await _mediator.Send(new AuthenticateHubParameters
                 {
-                    EventName = "MessageSent",
-                    GroupName = authentication.User.Email,
-                    HubClients = Clients,
-                    MessagePayload = userResponse.ResponseMessage,
+                    Context = Context
+                });
+                var dbResponse = await _mediator.Send(new AddNewMessageParameters
+                {
+                    model = model,
+                    User = authentication.User
                 });
 
-                await _mediator.Publish(new NotifyGroupExceptUserNotification()
+                var userResponse = await _mediator.Send(new GenerateNewMessageParameters
+                {
+                    IsOwner = true,
+                    Message = dbResponse.Message
+                });
+                var chatResponse = await _mediator.Send(new GenerateNewMessageParameters
+                {
+                    IsOwner = false,
+                    Message = dbResponse.Message
+                });
+
+                await _mediator.Publish(new MessageSenderNotification
+                {
+                    HubClients = Clients,
+                    GroupName = authentication.User.Email,
+                    EventName = MessageSentEvent,
+                    MessageData = new NotificationModel
+                    {
+                        MessageType = null,
+                        MessageContent = null,
+                        MessagePayload = userResponse.ResponseMessage,
+                    }
+                });
+
+                await _mediator.Publish(new NotifyGroupExceptUserNotification
                 {
                     HubClients = Clients,
                     Context = Context,
                     GroupName = dbResponse.GroupName,
-                    EventName = "MessageSent",
-                    MessagePayload = chatResponse.ResponseMessage
+                    EventName = MessageSentEvent,
+                    MessageData = new NotificationModel
+                    {
+                        MessageType = null,
+                        MessageContent = null,
+                        MessagePayload = chatResponse.ResponseMessage,
+                    }
                 });
             }
             catch (Exception ex)
             {
-                var userEmail = Context.User.FindFirst(ClaimTypes.Email).Value;
-                if (string.IsNullOrEmpty(userEmail))
+                await _mediator.Send(new ErrorNotification
                 {
-                    throw;
-                }
-                var errorNotification = new ErrorNotification()
-                {
+                    Context = Context,
                     HubClients = Clients,
-                    GroupName = userEmail,
                     ex = ex,
-                };
-                await _mediator.Publish(errorNotification);
+                });
             }
         }
 

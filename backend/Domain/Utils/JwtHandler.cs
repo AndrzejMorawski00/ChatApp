@@ -1,15 +1,16 @@
-﻿using Infrastructure.Entities;
+﻿using Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace ChatAppASPNET
+namespace Domain
 {
     public class JwtHandler
     {
         private readonly IConfiguration _config;
+        private const string JWTSecretKey = "Jwt:secretKey";
 
         public JwtHandler(IConfiguration configuration)
         {
@@ -18,7 +19,7 @@ namespace ChatAppASPNET
 
         public string GenerateJwtToken(UserData user, int expiresInMinutes)
         {
-            var securityKey = _config["Jwt:secretKey"]!;
+            var securityKey = _config[JWTSecretKey]!;
             var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(securityKey));
             var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256Signature);
 
@@ -35,9 +36,9 @@ namespace ChatAppASPNET
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public ClaimsPrincipal ValidateToken(string token)
+        public ClaimsPrincipal? ValidateToken(string token)
         {
-            var securityKey = _config["Jwt:secretKey"]!;
+            var securityKey = _config[JWTSecretKey]!;
             var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(securityKey));
 
             var tokenHandler = new JwtSecurityTokenHandler();

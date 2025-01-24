@@ -5,9 +5,9 @@ using System.Security.Claims;
 using Infrastructure.DBContext;
 using Domain.UseCases.Common;
 using MediatR;
-using Domain.UseCases.APIUseCases.Common;
+using Domain.UseCases.APIUseCases;
 
-namespace ChatAppASPNET.Controllers.API
+namespace ChatApp.Controllers.API
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -17,6 +17,9 @@ namespace ChatAppASPNET.Controllers.API
 
         private readonly AppDBContext _dbContext;
         private readonly IMediator _mediator;
+
+        private const string GenericErrorMessage = "Something went wrong...";
+        private const string InvalidUserEmailMessage = "Failed to get user data";
 
         public ChatController(AppDBContext appDBContext, IMediator mediator)
         {
@@ -29,14 +32,24 @@ namespace ChatAppASPNET.Controllers.API
         {
             try
             {
-                var userEmail = User.FindFirst(ClaimTypes.Email)?.Value!;
-                var user = await _mediator.Send(new GetUserModelParameters() { UserEmail = userEmail });
-                var userChats = await _mediator.Send(new UserChatListResponseParameters() { User = user.User });
+                var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+                if (userEmail == null)
+                {
+                    return BadRequest(InvalidUserEmailMessage);
+                }
+                var user = await _mediator.Send(new GetUserModelParameters
+                {
+                    UserEmail = userEmail
+                });
+                var userChats = await _mediator.Send(new UserChatListResponseParameters
+                {
+                    User = user.User
+                });
                 return Ok(userChats.ChatList);
             }
             catch (Exception ex)
             {
-                var errorMessage = ex.Message ?? "Something went wrong...";
+                var errorMessage = ex.Message ?? GenericErrorMessage;
                 return BadRequest(ex.Message);
             }
         }

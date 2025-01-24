@@ -1,6 +1,4 @@
-﻿
-using BCrypt.Net;
-namespace Domain
+﻿namespace Domain
 {
     public class PasswordHasher
     {

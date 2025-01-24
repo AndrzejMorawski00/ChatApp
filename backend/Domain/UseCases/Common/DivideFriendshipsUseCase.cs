@@ -1,6 +1,6 @@
 ﻿using Domain.Models.CommonModels;
 using Infrastructure.DBContext;
-using Infrastructure.Entities;
+using Entities;
 using MediatR;
 
 namespace Domain.UseCases.Common
@@ -48,7 +48,10 @@ namespace Domain.UseCases.Common
                     friendshipResponse["received"].Add(friendship);
                 }
             }
-            return new DivideFriendshipsResponseResults() { DividedFriendships = friendshipResponse };
+            return new DivideFriendshipsResponseResults
+            {
+                DividedFriendships = friendshipResponse
+            };
         }
 
 

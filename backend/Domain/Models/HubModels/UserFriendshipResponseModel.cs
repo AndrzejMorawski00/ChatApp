@@ -4,7 +4,7 @@ namespace Domain.Models.HubModels
 {
     public class UserFriendshipResponseModel
     {
-        public List<UserDataModel> Users { get; set; }
-        public Dictionary<string, List<FriendshipModel>> Friendships { get; set; }
+        public required List<UserDataModel> Users { get; set; }
+        public required Dictionary<string, List<FriendshipModel>> Friendships { get; set; }
     }
 }

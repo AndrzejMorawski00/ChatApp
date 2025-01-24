@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <StartupObject>ChatAppASPNET.Program</StartupObject>
+    <StartupObject>ChatApp.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,6 +29,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Domain\Domain.csproj" />
+		<ProjectReference Include="..\Entities\Entities.csproj" />
 		<ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
 	</ItemGroup>
 </Project>
