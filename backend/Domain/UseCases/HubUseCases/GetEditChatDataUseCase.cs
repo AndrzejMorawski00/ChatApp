@@ -46,7 +46,7 @@ namespace Domain.UseCases.HubUseCases
             var user = request.User;
             var chat = await _dbContext.Chats
                 .Include(c => c.Participants)
-                .FirstOrDefaultAsync(c => c.ID == model.chatID && c.OwnerID == user.ID);
+                .FirstOrDefaultAsync(c => c.ID == model.ChatID && c.OwnerID == user.ID);
             if (chat == null)
             {
                 throw new Exception(FetchChatDataFailedMessage);

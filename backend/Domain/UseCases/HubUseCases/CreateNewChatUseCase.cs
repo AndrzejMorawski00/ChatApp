@@ -16,6 +16,7 @@ namespace Domain.UseCases.HubUseCases
     public class CreateNewChatResults
     {
         public required List<UserData> Users { get; set; }
+        public required int ChatID { get; set; }
     }
 
     public class CreateNewChatHandler : IRequestHandler<CreateNewChatParameters, CreateNewChatResults>
@@ -35,6 +36,7 @@ namespace Domain.UseCases.HubUseCases
             {
                 throw new Exception(InvalidChatDataError);
             }
+
 
             request.ParticipantIDList.Add(request.User.ID);
             var userIDSet = new HashSet<int>(request.ParticipantIDList);
@@ -69,19 +71,19 @@ namespace Domain.UseCases.HubUseCases
 
                 newChat.Participants = participants;
                 await _dbContext.SaveChangesAsync();
-                await _dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                return new CreateNewChatResults
+                {
+                    Users = users,
+                    ChatID = newChat.ID
+                };
             }
             catch
             {
                 await transaction.RollbackAsync();
                 throw;
             }
-
-            return new CreateNewChatResults
-            {
-                Users = users
-            };
         }
     }
 }

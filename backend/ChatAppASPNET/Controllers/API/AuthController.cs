@@ -130,7 +130,7 @@ namespace ChatApp.Controllers.API
                 });
                 return Ok(new
                 {
-                    AccessToken = token
+                    AccessToken = token.Token
                 });
             }
             catch (Exception ex)

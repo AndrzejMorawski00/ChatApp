@@ -10,6 +10,7 @@ namespace Domain.Handlers.HubHandlers
     {
         public required IHubCallerClients HubClients { get; set; }
         public required string GroupEventName { get; set; }
+        public required int ChatID { get; set; }
         public required List<UserData> ChatParticipants { get; set; }
         public required NotificationModel GroupMessage { get; set; }
 
@@ -36,28 +37,43 @@ namespace Domain.Handlers.HubHandlers
                     && !string.IsNullOrEmpty(notification.UserEventName)
                     && notification.UserMessage != null)
                 {
-                    await _mediator.Send(new MessageSenderNotification
+                    await _mediator.Publish(new MessageSenderNotification
                     {
                         HubClients = notification.HubClients,
                         GroupName = notification.User.Email,
                         EventName = notification.UserEventName,
-                        MessageData = notification.UserMessage,
+                        MessageData = new NotificationModel
+                        {
+                            MessageType = notification.UserMessage.MessageType,
+                            MessageContent =notification.UserMessage.MessageContent,
+                            MessagePayload =  notification.UserMessage.MessagePayload,
+                        },
                     });
                 }
                 else
                 {
-                    if (notification.GroupMessage.MessagePayload == null)
+                    var messagePayload = notification.GroupMessage.MessagePayload;
+                    if (messagePayload == null)
                     {
                         var newMessageData = await _mediator.Send(new GenerateUserChatListResponseParameters() { User = user });
-                        notification.GroupMessage.MessagePayload = newMessageData.UserResponse;
+                        messagePayload = newMessageData.UserResponse;
                     }
 
-                    await _mediator.Send(new MessageSenderNotification
+                    await _mediator.Publish(new MessageSenderNotification
                     {
                         HubClients = notification.HubClients,
                         GroupName = user.Email,
                         EventName = notification.GroupEventName,
-                        MessageData = notification.GroupMessage,
+                        MessageData = new NotificationModel
+                        {
+                            MessageType = notification.GroupMessage.MessageType,
+                            MessageContent = notification.GroupMessage.MessageContent,
+                            MessagePayload = new
+                            {
+                                notification.ChatID,
+                                ChatList = messagePayload,
+                            }
+                        }
                     });
                 }
             }

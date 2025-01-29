@@ -35,7 +35,7 @@ namespace Domain.UseCases.HubUseCases
 
             var chat = await _dbContext.Chats
                 .Include(c => c.Participants)
-                .Include(c => c.OwnerID)
+                .Include(c => c.Owner)
                 .FirstOrDefaultAsync(c => c.ID == request.ChatID && c.ChatType != ChatType.DM);
 
             if (chat == null)
@@ -54,11 +54,11 @@ namespace Domain.UseCases.HubUseCases
             _dbContext.Remove(participant);
             await _dbContext.SaveChangesAsync();
 
-            var users = chat.Participants
+            var users = chat.Participants.Where(cp => cp != null)
                 .Select(p => p.User)
                 .ToList();
 
-            var chatOwner = users.FirstOrDefault(u => u.ID == chat.OwnerID);
+            var chatOwner = users.FirstOrDefault(u => u != null && u.ID == chat.OwnerID);
 
             if (chatOwner == null)
             {

@@ -36,18 +36,20 @@ namespace Domain.UseCases.HubUseCases
 
         public async Task<EditChatDBActionResults> Handle(EditChatDBActionParameters request, CancellationToken cancellationToken)
         {
+            var prevName = request.Chat.ChatName;
             using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
-                var newParticipants = request.ParticipantsToAdd
-                    .Select(id => new ChatParticipant()
-                    {
-                        ChatID = request.Chat.ID,
-                        UserID = id,
-                        User=request.User,
-                        Chat=request.Chat,
-                    })
-                    .ToList();
+                var newUsers = await _dbContext.UserData.Where(u => request.ParticipantsToAdd.Contains(u.ID)).ToListAsync();
+
+                var newParticipants = newUsers.Select(u => new ChatParticipant
+                {
+                    ChatID = request.Chat.ID,
+                    Chat = request.Chat,
+                    UserID = u.ID,
+                    User = u,
+                }
+                ).ToList();
 
                 if (newParticipants.Count + request.CurrentParticipants.Count - request.ParticipantsToRemove.Count < MIN_CHAT_SIZE)
                 {
@@ -91,7 +93,7 @@ namespace Domain.UseCases.HubUseCases
 
             var updatedParticipants = new List<UserData>();
 
-            if (request.model.ChatName != request.Chat.ChatName)
+            if (request.model.ChatName != prevName)
             {
                 updatedParticipants = await _dbContext.ChatParticipants
                     .Where(cp => cp.ChatID == request.Chat.ID && !request.ParticipantsToAdd.Contains(cp.UserID))

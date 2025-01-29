@@ -145,7 +145,7 @@ namespace ChatApp.Hubs
             }
             catch (Exception ex)
             {
-                await _mediator.Send(new ErrorNotification
+                await _mediator.Publish(new ErrorNotification
                 {
                     Context = Context,
                     HubClients = Clients,
@@ -178,7 +178,7 @@ namespace ChatApp.Hubs
 
                 var acceptFriendReceiverResponse = await _mediator.Send(new GenerateFriendshipResponseParameters
                 {
-                    User = data.Sender,
+                    User = data.Receiver,
                 });
 
                 var senderNotification = new MessageSenderNotification
@@ -203,7 +203,7 @@ namespace ChatApp.Hubs
                     {
                         MessageContent = FriendshipAcceptedMessage,
                         MessageType = InfoMessageType,
-                        MessagePayload = acceptFriendSenderResponse.FriendshipResponseModel,
+                        MessagePayload = acceptFriendReceiverResponse.FriendshipResponseModel,
                     }
                 };
 
@@ -212,7 +212,7 @@ namespace ChatApp.Hubs
             }
             catch (Exception ex)
             {
-                await _mediator.Send(new ErrorNotification
+                await _mediator.Publish(new ErrorNotification
                 {
                     Context = Context,
                     HubClients = Clients,
@@ -294,7 +294,7 @@ namespace ChatApp.Hubs
             }
             catch (Exception ex)
             {
-                await _mediator.Send(new ErrorNotification
+                await _mediator.Publish(new ErrorNotification
                 {
                     Context = Context,
                     HubClients = Clients,
@@ -329,6 +329,7 @@ namespace ChatApp.Hubs
                     HubClients = Clients,
                     GroupEventName = AddedToChatEvent,
                     ChatParticipants = newChatResponse.Users,
+                    ChatID = newChatResponse.ChatID,
                     GroupMessage = new NotificationModel
                     {
                         MessageType = InfoMessageType,
@@ -341,13 +342,20 @@ namespace ChatApp.Hubs
                     {
                         MessageType = SuccessMessageType,
                         MessageContent = ChatCreatedMessage,
-                        MessagePayload = userResponse.UserResponse,
+                        MessagePayload = new
+                        {
+                            newChatResponse.ChatID,
+                            ChatList = userResponse.UserResponse,
+                        },
                     },
                 };
+
+
+                await _mediator.Publish(newGroupMessage);
             }
             catch (Exception ex)
             {
-                await _mediator.Send(new ErrorNotification
+                await _mediator.Publish(new ErrorNotification
                 {
                     Context = Context,
                     HubClients = Clients,
@@ -389,10 +397,14 @@ namespace ChatApp.Hubs
                     {
                         MessageType = SuccessMessageType,
                         MessageContent = YouLeftChatMessage,
-                        MessagePayload = userResponse.ChatList,
+                        MessagePayload = new
+                        {
+                            ChatID,
+                            userResponse.ChatList,
+                        }
                     }
                 };
-                var chatOwnerNotification = new MessageSenderNotification()
+                var chatOwnerNotification = new MessageSenderNotification
                 {
                     HubClients = Clients,
                     GroupName = leaveChatResults.ChatOwner.Email,
@@ -401,7 +413,11 @@ namespace ChatApp.Hubs
                     {
                         MessageType = null,
                         MessageContent = null,
-                        MessagePayload = chatOwnerResponse.ChatList,
+                        MessagePayload = new
+                        {
+                            ChatID,
+                            chatOwnerResponse.ChatList,
+                        }
                     }
                 };
 
@@ -410,7 +426,7 @@ namespace ChatApp.Hubs
             }
             catch (Exception ex)
             {
-                await _mediator.Send(new ErrorNotification
+                await _mediator.Publish(new ErrorNotification
                 {
                     Context = Context,
                     HubClients = Clients,
@@ -438,34 +454,36 @@ namespace ChatApp.Hubs
                     User = authentication.User
                 });
 
-                await _mediator.Publish(new GroupMessageNotification
-                {
-                    HubClients = Clients,
-                    GroupEventName = ChatDeletedEvent,
-                    ChatParticipants = deleteChatResponse.ChatParticipants,
-                    GroupMessage = new NotificationModel
+
+                    await _mediator.Publish(new GroupMessageNotification
                     {
-                        MessageType = InfoMessageType,
-                        MessageContent = ChatDeletedMessage,
-                        MessagePayload = null,
-                    },
-                    User = authentication.User,
-                    UserEventName = ChatDeletedEvent,
-                    UserMessage = new NotificationModel
-                    {
-                        MessageType = SuccessMessageType,
-                        MessageContent = ChatDeletedMessage,
-                        MessagePayload = new
+                        HubClients = Clients,
+                        GroupEventName = ChatDeletedEvent,
+                        ChatID = ChatID,
+                        ChatParticipants = deleteChatResponse.ChatParticipants,
+                        GroupMessage = new NotificationModel
                         {
-                            chatID = ChatID,
-                            UserChatList = userResponse.UserResponse
+                            MessageType = InfoMessageType,
+                            MessageContent = ChatDeletedMessage,
+                            MessagePayload = null,
+                        },
+                        User = authentication.User,
+                        UserEventName = ChatDeletedEvent,
+                        UserMessage = new NotificationModel
+                        {
+                            MessageType = SuccessMessageType,
+                            MessageContent = ChatDeletedMessage,
+                            MessagePayload = new
+                            {
+                                ChatID,
+                                chatList = userResponse.UserResponse
+                            }
                         }
-                    }
-                });
+                    });
             }
             catch (Exception ex)
             {
-                await _mediator.Send(new ErrorNotification
+                await _mediator.Publish(new ErrorNotification
                 {
                     Context = Context,
                     HubClients = Clients,
@@ -500,25 +518,16 @@ namespace ChatApp.Hubs
                     ParticipantsToRemove = getChatData.ParticipantsToRemove
                 });
 
-                //await _mediator.Publish(new NotifyUsersNotification()
-                //{
-                //    HubClients = Clients,
-                //    ChatParticipants = dbResponseData.UpdatedParticipants,
-                //    EventName = "EditChat",
-                //    Message = "Chat has been updated.",
-                //    MessageType = "info",
-                //    //User = authentication.User 
-                //});
-
                 await _mediator.Publish(new GroupMessageNotification
                 {
                     HubClients = Clients,
                     GroupEventName = EditChatEvent,
                     ChatParticipants = dbResponseData.UpdatedParticipants,
+                    ChatID = model.ChatID,
                     GroupMessage = new NotificationModel
                     {
                         MessageType = InfoMessageType,
-                        MessageContent = ChatDeletedMessage,
+                        MessageContent = ChatUpdatedMessage,
                         MessagePayload = null,
                     },
                     User = null,
@@ -530,6 +539,7 @@ namespace ChatApp.Hubs
                 {
                     HubClients = Clients,
                     GroupEventName = AddedToChatEvent,
+                    ChatID = model.ChatID,
                     ChatParticipants = dbResponseData.AddedParticipants,
                     GroupMessage = new NotificationModel
                     {
@@ -547,6 +557,7 @@ namespace ChatApp.Hubs
                     HubClients = Clients,
                     GroupEventName = UserRemovedEvent,
                     ChatParticipants = dbResponseData.RemovedParticipants,
+                    ChatID = model.ChatID,
                     GroupMessage = new NotificationModel
                     {
                         MessageType = InfoMessageType,
@@ -560,7 +571,7 @@ namespace ChatApp.Hubs
             }
             catch (Exception ex)
             {
-                await _mediator.Send(new ErrorNotification
+                await _mediator.Publish(new ErrorNotification
                 {
                     Context = Context,
                     HubClients = Clients,
@@ -583,7 +594,7 @@ namespace ChatApp.Hubs
             }
             catch (Exception ex)
             {
-                await _mediator.Send(new ErrorNotification
+                await _mediator.Publish(new ErrorNotification
                 {
                     Context = Context,
                     HubClients = Clients,
@@ -646,7 +657,7 @@ namespace ChatApp.Hubs
             }
             catch (Exception ex)
             {
-                await _mediator.Send(new ErrorNotification
+                await _mediator.Publish(new ErrorNotification
                 {
                     Context = Context,
                     HubClients = Clients,
@@ -654,7 +665,6 @@ namespace ChatApp.Hubs
                 });
             }
         }
-
         public override Task OnDisconnectedAsync(Exception? exception)
         {
             var clientId = this.Context.ConnectionId;
