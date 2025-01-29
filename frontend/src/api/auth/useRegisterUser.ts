@@ -3,6 +3,8 @@ import { useNavigate } from "react-router";
 import { RegisterFormType, useRegisterUserType } from "../../types/auth";
 import axiosInstance from "../../utils/api/apiConfig";
 import { API_REGISTER_ENDPOINT } from "../../constants/endpoints";
+import useAppContext from "../../hooks/useAppContextHook";
+import { ApiStatusMessage } from "../../types/ApiMessages";
 
 // Constants
 const SUCCESSFUL_REGISTER_REDIRECT_LINK = "/login/";
@@ -12,6 +14,7 @@ const useRegisterUser = (): useRegisterUserType => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const { handleMessagesChange } = useAppContext();
 
     const registerUser = async (registerData: RegisterFormType): Promise<void> => {
         setLoading(true);
@@ -20,6 +23,12 @@ const useRegisterUser = (): useRegisterUserType => {
         try {
             const response = await axiosInstance.post(API_REGISTER_ENDPOINT, registerData);
             if (response.status == 200) {
+                const newMessage: ApiStatusMessage = {
+                    id: Date.now(),
+                    message: "Account created successfully.",
+                    messageType: "success",
+                };
+                handleMessagesChange(newMessage);
                 navigate(SUCCESSFUL_REGISTER_REDIRECT_LINK);
             }
         } catch (err: any) {

@@ -39,7 +39,7 @@ const useSubscribeUsersEvents = () => {
     };
 
     const handleFriendshipEvent = (data: FriendshipRequestRecieved): void => {
-        const { users, friendships } = data;
+        const {users, friendships} = data
         updateUsersData(users);
         updateFriendsData(friendships);
     };
@@ -48,6 +48,7 @@ const useSubscribeUsersEvents = () => {
         connection.useSignalREffect(
             FRIENDSHIP_REQUEST_RECEIVED,
             (data: SignalRAPIResponseMessage<FriendshipRequestRecieved>) => {
+                console.log(data);
                 handleMessageReceived(data, handleFriendshipEvent, updateMessages);
             },
             []

@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { AppContextType } from "../types/AppContext";
 import { AppContext } from "../providers/AppContextProvider";
 
- const useAppContext = (): AppContextType => {
+const useAppContext = (): AppContextType => {
     const context = useContext(AppContext);
 
     if (context === undefined) {
@@ -12,6 +12,4 @@ import { AppContext } from "../providers/AppContextProvider";
     return context;
 };
 
-
-
-export default useAppContext
+export default useAppContext;

@@ -19,9 +19,7 @@ const Message = ({ message, fetchNextRef }: Props) => {
                 <p className={twMerge("text-l font-semibold", textName)}>
                     {message.senderData.firstName} {message.senderData.lastName}
                 </p>
-                <p className={twMerge("text-xl break-words", textContent)}>
-                    {message.id}: {message.content}
-                </p>
+                <p className={twMerge("text-xl break-words", textContent)}>{message.content}</p>
             </div>
         </li>
     );

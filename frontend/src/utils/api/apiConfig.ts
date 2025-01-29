@@ -23,6 +23,11 @@ const axiosInstance = axios.create({
     },
 });
 
+export const refreshInstance = axios.create({
+    baseURL: getBaseAPIUrl(),
+    headers: { "Content-Type": CONTENT_TYPE_JSON },
+});
+
 axiosInstance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem(ACCESS_TOKEN);
@@ -31,15 +36,11 @@ axiosInstance.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 axiosInstance.interceptors.response.use(
-    (response) => {
-        return response;
-    },
+    (response) => response,
     async (error) => {
         const originalRequest = error.config;
 

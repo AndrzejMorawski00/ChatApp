@@ -16,10 +16,14 @@ const Header = () => {
     const location = useLocation();
     const pathSegments = location.pathname.split("/");
     const includeHomeLink = pathSegments.includes(HOME_PATH_SEGMENT) && pathSegments.length > MIN_PATH_SEGMENT;
+    const logoLink = isAuthenticated ? HOME_PATH : "/";
+
     return (
         <header className="flex items-center justify-between w-full pr-4 min-h-16">
             <div className="flex gap-2 ml-4">
-                <Link to='/' className="mr-4 text-3xl tracking-wider text-textColor font-montserrat linkStyles">ChatApp</Link>
+                <Link to={logoLink} className="mr-4 text-3xl tracking-wider text-textColor font-montserrat linkStyles">
+                    ChatApp
+                </Link>
                 <ThemeSwitch />
             </div>
             <div className="flex ">

@@ -30,6 +30,8 @@ export default {
                 successApiMessageBackground: "rgba(var(--successApiMessageBackground))",
                 defaultApiMessageIconColor: "rgba(var(--defaultApiMessageIconColor))",
                 alternateApiMessageIconColor: "rgba(var(--alternateApiMessageIconColor))",
+                iconGreenColorHover: "rgba(var(--iconGreenColorHover))",
+                iconRedColorHover: "rgba(var(--iconRedColorHover))",
             },
             fontFamily: {
                 montserrat: ["Montserrat", "serif"],

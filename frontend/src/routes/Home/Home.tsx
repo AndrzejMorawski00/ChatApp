@@ -18,9 +18,22 @@ const Home = () => {
     return (
         <div className="flex h-full border-t-2 border-t-white/30">
             <div className="flex flex-col items-center gap-2 mt-5 ml-4">
-                <Link className="mr-4 text-xl tracking-wider w-fit text-textColor font-montserrat linkStyles" to={FRIENDS_PATH}>{FRIENDS_TEXT}</Link>
-                <Link className="mr-4 text-xl tracking-wider outline-none w-fit text-textColor font-montserrat linkStyles" to={CHATS_PATH}>{CHATS_TEXT}</Link>
-                <ChatModal buttonStyles="text-xl text-textColor mr-4 font-montserrat tracking-wider linkStyles focus:outline-none text-nowrap" buttonText="New Chat" />
+                <Link
+                    className="mr-4 text-xl tracking-wider w-fit text-textColor font-montserrat linkStyles"
+                    to={FRIENDS_PATH}
+                >
+                    {FRIENDS_TEXT}
+                </Link>
+                <Link
+                    className="mr-4 text-xl tracking-wider outline-none w-fit text-textColor font-montserrat linkStyles"
+                    to={CHATS_PATH}
+                >
+                    {CHATS_TEXT}
+                </Link>
+                <ChatModal
+                    buttonStyles="text-xl text-textColor mr-4 font-montserrat tracking-wider linkStyles focus:outline-none text-nowrap"
+                    buttonText="New Chat"
+                />
             </div>
             <Outlet />
         </div>

@@ -14,5 +14,4 @@ export type AppContextType = {
     handleThemeChange: (newThemeValue: (typeof ThemeColors)[number]) => void;
 };
 
-
 export type ThemeColor = (typeof ThemeColors)[number];

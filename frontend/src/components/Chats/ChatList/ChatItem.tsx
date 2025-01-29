@@ -8,8 +8,11 @@ interface Props {
 
 const Chat = ({ chat }: Props) => {
     return (
-        <div className="flex flex-col items-start pl-2">
-            <Link className="mx-2 text-xl tracking-wider text-textColor font-montserrat linkStyles" to={chat.id.toString()}>
+        <div className="flex flex-col items-center justify-center min-w-[20vw]">
+            <Link
+                className="text-xl tracking-wider text-center text-textColor font-montserrat linkStyles w-fit"
+                to={chat.id.toString()}
+            >
                 {chat.chatName}
             </Link>
             <ChatActions chat={chat} />

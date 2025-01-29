@@ -45,7 +45,7 @@ const Register = () => {
 
     return (
         <div className="flex flex-col items-center w-screen h-screen gap-1">
-            <Header/>
+            <Header />
             <form action="" onSubmit={handleFormSubmit} className="flex flex-col gap-2 mt-10">
                 <div className="flex flex-row gap-4">
                     <div className="flex flex-col gap-2">

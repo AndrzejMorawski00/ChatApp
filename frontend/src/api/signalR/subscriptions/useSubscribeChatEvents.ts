@@ -1,11 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { SignalRContext } from "../../../providers/SignalRContextProvider";
-import { ChatDeletionResponse, ChatData, ChatRouteParams } from "../../../types/Chats";
+import { ChatData, ChatRouteParams, APIChatResponse } from "../../../types/Chats";
 import { useNavigate, useParams } from "react-router";
 import { CHAT_DELETED, CHAT_EDITED, USER_ADDED, USER_REMOVED } from "../../../constants/signalRActions";
-import useAPIMessagesHook from "../../../hooks/useApiMessagesHook";
 import { handleMessageReceived } from "../../../utils/SignalRAaction/handleMessageReceived";
 import { SignalRAPIResponseMessage } from "../../../types/siglalRSubscriptions";
+import useAPIMessagesHook from "../../../hooks/useAPIMessagesHook";
 
 // Constants
 
@@ -26,9 +26,9 @@ const useSubscribeChatEvents = () => {
         queryClient.setQueryData(chatsQueryKeys, () => userChatList);
     };
 
-    const handleChatDeletion = (data: ChatDeletionResponse): void => {
-        const { chatID, userChatList } = data;
-        queryClient.setQueryData(chatsQueryKeys, () => userChatList);
+    const handleChatChange = (data: APIChatResponse): void => {
+        const { chatID, chatList } = data;
+        updateUserChatList(chatList);
         if (chatID == currChatID) {
             navigate(HOME_ROUTE);
         }
@@ -37,36 +37,32 @@ const useSubscribeChatEvents = () => {
     const subscribeToChatEvents = () => {
         connection.useSignalREffect(
             USER_ADDED,
-            (data: SignalRAPIResponseMessage<ChatData[]>) => {
-                console.log(data);
-                handleMessageReceived(data, updateUserChatList, updateMessages);
+            (data: SignalRAPIResponseMessage<APIChatResponse>) => {
+                handleMessageReceived(data, handleChatChange, updateMessages);
             },
             []
         );
 
         connection.useSignalREffect(
             USER_REMOVED,
-            (data: SignalRAPIResponseMessage<ChatData[]>) => {
-                console.log(data);
-                handleMessageReceived(data, updateUserChatList, updateMessages);
+            (data: SignalRAPIResponseMessage<APIChatResponse>) => {
+                handleMessageReceived(data, handleChatChange, updateMessages);
             },
             []
         );
 
         connection.useSignalREffect(
             CHAT_EDITED,
-            (data: SignalRAPIResponseMessage<ChatData[]>) => {
-                console.log(data);
-                handleMessageReceived(data, updateUserChatList, updateMessages);
+            (data: SignalRAPIResponseMessage<APIChatResponse>) => {
+                handleMessageReceived(data, handleChatChange, updateMessages);
             },
             []
         );
 
         connection.useSignalREffect(
             CHAT_DELETED,
-            (data: SignalRAPIResponseMessage<ChatDeletionResponse>) => {
-                console.log(data);
-                handleMessageReceived(data, handleChatDeletion, updateMessages);
+            (data: SignalRAPIResponseMessage<APIChatResponse>) => {
+                handleMessageReceived(data, handleChatChange, updateMessages);
             },
             []
         );

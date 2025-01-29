@@ -7,11 +7,11 @@ import MessageToastList from "../components/APIMessages/MessageToastList";
 const Providers = () => {
     return (
         <QueryProvider>
-                <AppContextProvider>
-                    <RoutingProvider />
-                    <MessageToastList />
-                    <ReactQueryDevtools />
-                </AppContextProvider>
+            <AppContextProvider>
+                <RoutingProvider />
+                <MessageToastList />
+                <ReactQueryDevtools />
+            </AppContextProvider>
         </QueryProvider>
     );
 };

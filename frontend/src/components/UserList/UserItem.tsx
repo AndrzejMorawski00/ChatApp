@@ -2,9 +2,7 @@ import { UserData } from "../../types/Users";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import useSignalRAction from "../../api/signalR/signalRActions";
-
-// Constants
-const ADD_FRIEND_ACTION = "AddFriend";
+import { ADD_FRIEND_ACTION } from "../../constants/signalRActions";
 
 interface Props {
     user: UserData;
@@ -19,11 +17,10 @@ const UserItem = ({ user }: Props) => {
                 <p className="py-1 text-xl tracking-wider text-textColor">{user.firstName}</p>
                 <p className="py-1 text-xl tracking-wider text-textColor">{user.lastName}</p>
             </div>
-
             <button className="" onClick={async () => await handleSignalRAction(ADD_FRIEND_ACTION, user.email)}>
                 <FontAwesomeIcon
                     icon={faUserPlus}
-                    className="transition duration-300 transform size-6 text-iconColor hover:text-iconColorHover hover:scale-105"
+                    className="transition duration-300 transform size-6 text-iconColor hover:text-iconGreenColorHover hover:scale-105"
                 />
             </button>
         </li>

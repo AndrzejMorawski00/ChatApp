@@ -5,7 +5,6 @@ import { UserData } from "../../types/Users";
 import UserItem from "./UserItem";
 // Constants
 
-
 interface Props {}
 
 const UserList = ({}: Props) => {
@@ -40,10 +39,12 @@ const UserList = ({}: Props) => {
 
     const usersData: UserData[] = data ? data : [];
     return (
-        <ul className="flex flex-col gap-2 pr-2 mt-4">
-            {usersData.map((user, idx) => (
-                <UserItem key={idx} user={user} searchBarValue={searchBarValue} />
-            ))}
+        <ul className="flex flex-col gap-2 pr-2 mt-4 max-h-[70vh] overflow-y-auto">
+            {usersData.length > 0 ? (
+                usersData.map((user, idx) => <UserItem key={idx} user={user} searchBarValue={searchBarValue} />)
+            ) : (
+                <li className="text-xl text-center text-textColor">No users available in this list.</li>
+            )}
         </ul>
     );
 };

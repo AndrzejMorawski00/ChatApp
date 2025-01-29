@@ -2,7 +2,6 @@ import { FRIENDS_API_ENDPOINT } from "../../constants/endpoints";
 import { FriendshipAPIResponse } from "../../types/Friends";
 import useGetRequest from "../useGetRequest/useGetRequest";
 
-
 const INITIAL_FRIENDS_DATA: FriendshipAPIResponse = { accepted: [], sent: [], received: [] };
 
 export const useFriendsActions = () => {

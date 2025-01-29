@@ -3,11 +3,11 @@ import useAppContext from "../../hooks/useAppContextHook";
 import { useEffect } from "react";
 
 const LogoutAndRegister = () => {
-    const {handleAuthenticationStateChange} = useAppContext();
-    
+    const { handleAuthenticationStateChange } = useAppContext();
+
     useEffect(() => {
         handleAuthenticationStateChange(false);
-    }, [])
+    }, []);
     return <Register />;
 };
 

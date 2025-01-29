@@ -3,7 +3,6 @@ import { getBaseAPIUrl } from "../utils/api/apiConfig";
 import { ACCESS_TOKEN } from "../constants/auth";
 import { createSignalRContext } from "react-signalr/signalr";
 
-
 export const SignalRContext = createSignalRContext();
 
 interface Props {

@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import MainLink from "../../components/Main/MainLink";
 
 import useAppContext from "../../hooks/useAppContextHook";
@@ -9,17 +9,16 @@ import { isValidJWTToken } from "../../utils/auth/isValidJWTToken";
 import Header from "../../components/Header/Header";
 
 // Constants
-const HOME_PATH = "/home/";
 const ROOT_PATH = "/";
+const HOME_PATH = "/home/";
 const LOGIN_PATH = "/login/";
-const REGISTER_PATH = "/register/";
-const LOGOUT_PATH = "/logout/";
 const LOGIN_TEXT = "Login";
+const REGISTER_PATH = "/register/";
 const REGISTER_TEXT = "Register";
-const LOGOUT_TEXT = "Logout";
 
 const Main = () => {
     const location = useLocation();
+    const accessToken = localStorage.getItem(ACCESS_TOKEN);
     const navigate = useNavigate();
     const redirectLink = location.pathname != ROOT_PATH ? location.pathname : HOME_PATH;
     const { isAuthenticated, handleAuthenticationStateChange } = useAppContext();
@@ -42,14 +41,14 @@ const Main = () => {
             }
         };
         authenticate();
-    }, [isAuthenticated]);
+    }, [isAuthenticated, accessToken]);
     return (
-        <div className="flex flex-col h-screen w-screen bg-backgrouolor">
-            <Header/>
+        <div className="flex flex-col w-screen h-screen bg-backgrouolor">
+            <Header />
             {isAuthenticated ? (
                 <Outlet />
             ) : (
-                <div className="flex flex-col gap-10 w-full h-full items-center justify-center">
+                <div className="flex flex-col items-center justify-center w-full h-full gap-10">
                     <MainLink destination={LOGIN_PATH} buttonText={LOGIN_TEXT} />
                     <MainLink destination={REGISTER_PATH} buttonText={REGISTER_TEXT} />
                 </div>

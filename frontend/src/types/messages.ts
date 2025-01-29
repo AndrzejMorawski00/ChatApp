@@ -1,23 +1,22 @@
 export type ChatMessage = {
-    id : number,
-    chatID : number,
-    sendTime : Date,
-    senderData: SenderData,
-    content : string
-}
+    id: number;
+    chatID: number;
+    sendTime: Date;
+    senderData: SenderData;
+    content: string;
+};
 
 export type SenderData = {
-    id : number,
-    isOwner : boolean
-    firstName : string,
-    lastName : string
-}
+    id: number;
+    isOwner: boolean;
+    firstName: string;
+    lastName: string;
+};
 
 export type MessageQuery = {
-    chatID : number,
-    pageNumber : number,
-}
-
+    chatID: number;
+    pageNumber: number;
+};
 
 export type PaginatedData<T> = {
     count: number;
@@ -26,9 +25,8 @@ export type PaginatedData<T> = {
     items: T[];
 };
 
-
 export type ChatMessageColors = {
-    background : string,
-    textName : string,
-    textContent : string,
-}
+    background: string;
+    textName: string;
+    textContent: string;
+};

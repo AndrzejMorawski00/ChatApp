@@ -18,7 +18,7 @@ const FriendsContainer = ({}: Props) => {
     if (isErrorFriends) {
         return (
             <div className="flex items-center justify-center w-full h-full pt-4 pl-4 border-l-2 border-l-white/30">
-                <p className="mt-4 text-2xl font-montserrat text-mainButtonBackground animate-pulse">Loading...</p>
+                <p className="mt-4 text-2xl font-montserrat text-mainButtonBackground animate-pulse">Error...</p>
             </div>
         );
     }
@@ -33,7 +33,6 @@ const FriendsContainer = ({}: Props) => {
                 listName={FRIEND_COLUMNS.sent}
                 friends={friendshipData.sent.map((f) => ({ id: f.id, userData: f.receiverData }))}
             />
-
             <FriendList
                 listName={FRIEND_COLUMNS.accepted}
                 friends={friendshipData.accepted.map((f) =>

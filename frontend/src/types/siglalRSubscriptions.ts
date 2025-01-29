@@ -7,8 +7,7 @@ export type FriendshipRequestRecieved = {
     users: UserData[];
 };
 
-
 export type SignalRAPIResponseMessage<T> = {
-    message? : NewApiStatusMessage,
-    payload? : T
-}
+    message?: NewApiStatusMessage;
+    payload?: T;
+};

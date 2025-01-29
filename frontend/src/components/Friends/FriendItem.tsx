@@ -25,6 +25,7 @@ const getActions = (
                     actionName={REMOVE_FRIEND_ACTION}
                     actionParameter={friendship.id}
                     icon={faX}
+                    hoverColor="hover:text-iconRedColorHover"
                     handleSignalRAction={handleSignalRAction}
                 />
             );
@@ -35,12 +36,14 @@ const getActions = (
                         actionName={ACCEPT_FRIEND_ACTION}
                         actionParameter={friendship.id}
                         icon={faCheck}
+                        hoverColor="hover:text-iconGreenColorHover"
                         handleSignalRAction={handleSignalRAction}
                     />
                     <FriendActionButton
                         actionName={REMOVE_FRIEND_ACTION}
                         actionParameter={friendship.id}
                         icon={faX}
+                        hoverColor="hover:text-iconRedColorHover"
                         handleSignalRAction={handleSignalRAction}
                     />
                 </>
@@ -52,6 +55,7 @@ const getActions = (
                     actionName={REMOVE_FRIEND_ACTION}
                     actionParameter={friendship.id}
                     icon={faX}
+                    hoverColor="hover:text-iconRedColorHover"
                     handleSignalRAction={handleSignalRAction}
                 />
             );
@@ -66,7 +70,7 @@ const FriendItem = ({ friendship, actions }: Props) => {
 
     return (
         <li className="flex flex-col">
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center w-full gap-5">
                 <p className="text-xl tracking-wider text-textColor w-fit">{friendship.userData.firstName}</p>
                 <p className="text-xl tracking-wider text-textColor w-fit">{friendship.userData.lastName}</p>
             </div>

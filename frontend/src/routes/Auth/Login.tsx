@@ -42,7 +42,7 @@ const Register = () => {
 
     return (
         <div className="flex flex-col items-center w-screen h-screen gap-2 x">
-            <Header/>
+            <Header />
             <form action="" onSubmit={handleFormSubmit} className="flex flex-col gap-2 mx-2 my-2 mt-10">
                 <div className="flex flex-col gap-2">
                     <label htmlFor="email" className="text-2xl tracking-wider text-textColor">
@@ -86,13 +86,9 @@ const Register = () => {
             {loading && (
                 <p className="mt-4 text-2xl font-montserrat text-mainButtonBackground animate-pulse">Loading...</p>
             )}
-            {error && (
-                <p className="mt-4 text-2xl text-red-600 font-montserrat animate-pulse">
-                    {error}
-                </p>
-            )}
+            {error && <p className="mt-4 text-2xl text-red-600 font-montserrat animate-pulse">{error}</p>}
         </div>
     );
 };
 
-export default Register
+export default Register;

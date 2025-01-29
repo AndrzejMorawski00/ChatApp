@@ -29,11 +29,11 @@ const UserSearchBar = () => {
     };
 
     return (
-        <form action="" className="flex flex-row  items-center border-b-2 bg-formInputBackgroundColor py-1 pr-2">
+        <form action="" className="flex flex-row items-center py-1 pr-2 border-b-2 bg-formInputBackgroundColor">
             <input
                 type="text"
                 placeholder="Search..."
-                className="bg-formInputBackgroundColor text-xl text-formInputTextColor outline-none px-2 py-1"
+                className="px-2 py-1 text-xl outline-none bg-formInputBackgroundColor text-formInputTextColor"
                 maxLength={10}
                 value={searchBarInput}
                 onChange={(e) => handleInputChange(e.target.value)}

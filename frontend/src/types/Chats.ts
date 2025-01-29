@@ -5,7 +5,7 @@ export type ChatData = {
     chatType: ChatCategory;
     chatName: string;
     owner: number;
-    isOwner : boolean;
+    isOwner: boolean;
     chatParticipants: ChatParticipant[];
 };
 
@@ -14,12 +14,10 @@ export type NewChatRequest = {
     participantsID: number[];
 };
 
-
-export type ChatDeletionResponse = {
-    chatID : number,
-    userChatList: ChatData[],
-}
-
+export type APIChatResponse = {
+    chatID: number;
+    chatList: ChatData[];
+};
 
 export type ChatParticipant = {
     id: number;
@@ -27,8 +25,7 @@ export type ChatParticipant = {
     lastName: string;
 };
 
-
-
 export type ChatRouteParams = {
     chatID: string;
 };
+

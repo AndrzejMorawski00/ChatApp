@@ -1,9 +1,8 @@
 import { createContext, ReactNode, useEffect, useState } from "react";
 import { ApiStatusMessage } from "../types/ApiMessages";
 import { AppContextType, ThemeColor } from "../types/AppContext";
+import { MESSAGE_TIMEOUT } from "../constants/AppContext";
 
-//
-const MESSAGE_TIMEOUT = 100000;
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 interface Props {
@@ -15,26 +14,7 @@ const AppContextProvider = ({ children }: Props) => {
     const [currActiveChat, setCurrActiveChat] = useState<number | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [searchBarValue, setSearchBarValue] = useState<string>("");
-    // const [messages, setMessages] = useState<ApiStatusMessage[]>([
-    //     {
-    //         id: Infinity,
-    //         messageType: "error",
-    //         message: "This is Error Message",
-    //     },
-    //     {
-    //         id: Infinity,
-    //         messageType: "success",
-    //         message: "This is Success Message",
-    //     },
-    //     {
-    //         id: Infinity,
-    //         messageType: "info",
-    //         message: "This is Info Message",
-    //     },
-    // ]);
     const [messages, setMessages] = useState<ApiStatusMessage[]>([]);
-      
-
 
     const handleThemeChange = (newThemeValue: ThemeColor): void => {
         setTheme((prevValue) => {
