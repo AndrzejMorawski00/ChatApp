@@ -29,7 +29,7 @@ const useAuth = () => {
             navigate(INVALID_AUTH_REDIRECT_LINK);
         };
         authenticate();
-    }, [navigate, isAuthenticated]);
+    }, [location, isAuthenticated]);
 };
 
 export default useAuth;
