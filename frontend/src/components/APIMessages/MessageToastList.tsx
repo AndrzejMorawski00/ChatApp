@@ -1,11 +1,12 @@
-import * as Toast from "@radix-ui/react-toast";
-import useAppContext from "../../hooks/useAppContextHook";
+import { useSelector } from "react-redux";
 import MessageToast from "./MessageToast";
+import { RootState } from "../../store/store";
+import * as Toast from "@radix-ui/react-toast";
 
 interface Props {}
 
 const MessageToastList = ({}: Props) => {
-    const { messages } = useAppContext();
+    const { messages } = useSelector((state: RootState) => state.messages);
     return (
         <Toast.Provider swipeDirection="right">
             {messages.map((message) => (

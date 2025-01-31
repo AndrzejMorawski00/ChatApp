@@ -1,6 +1,6 @@
 import { twMerge } from "tailwind-merge";
 import { ChatMessage } from "../../types/messages";
-import { getChatMessageColors } from "../../utils/messages/const getChatMessageColors";
+import { getChatMessageColors } from "../../utils/messages/getChatMessageColors";
 
 interface Props {
     message: ChatMessage;

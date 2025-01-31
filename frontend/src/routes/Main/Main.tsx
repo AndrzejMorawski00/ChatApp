@@ -1,12 +1,14 @@
 import { Outlet, useLocation, useNavigate } from "react-router";
 import MainLink from "../../components/Main/MainLink";
-
-import useAppContext from "../../hooks/useAppContextHook";
 import { useEffect } from "react";
 import { ACCESS_TOKEN } from "../../constants/auth";
 import { refreshToken } from "../../utils/auth/refreshToken";
 import { isValidJWTToken } from "../../utils/auth/isValidJWTToken";
 import Header from "../../components/Header/Header";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import { changeAuthenticationState } from "../../store/auth/authSlice";
+import { useAppDispatch } from "../../hooks/useReduxHook";
 
 // Constants
 const ROOT_PATH = "/";
@@ -17,22 +19,24 @@ const REGISTER_PATH = "/register/";
 const REGISTER_TEXT = "Register";
 
 const Main = () => {
-    const location = useLocation();
-    const accessToken = localStorage.getItem(ACCESS_TOKEN);
     const navigate = useNavigate();
+    const location = useLocation();
+    const dispatch = useAppDispatch();
+    const accessToken = localStorage.getItem(ACCESS_TOKEN);
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
     const redirectLink = location.pathname != ROOT_PATH ? location.pathname : HOME_PATH;
-    const { isAuthenticated, handleAuthenticationStateChange } = useAppContext();
+
 
     useEffect(() => {
         const authenticate = async (): Promise<void> => {
             const token = localStorage.getItem(ACCESS_TOKEN);
             if (token && isValidJWTToken(token)) {
-                handleAuthenticationStateChange(true);
+                dispatch(changeAuthenticationState(true));
                 navigate(redirectLink);
             } else {
                 const refreshed = await refreshToken();
                 if (!refreshed) {
-                    handleAuthenticationStateChange(false);
+                    dispatch(changeAuthenticationState(false));
                     localStorage.clear();
                     navigate(ROOT_PATH);
                 } else {

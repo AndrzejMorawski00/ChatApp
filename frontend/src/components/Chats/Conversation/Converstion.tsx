@@ -1,29 +1,30 @@
 import { useParams } from "react-router";
 import Message from "../../Messages/Message";
-import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
 import NewMessageForm from "../NewMessageForm";
-import useGetInfiniteMessages from "../../../api/useGetInfiniteMessages.ts/useGetInfiniteMessages";
-import useAppContext from "../../../hooks/useAppContextHook";
-import useSignalRAction from "../../../api/signalR/signalRActions";
-import { SignalRContext } from "../../../providers/SignalRContextProvider";
-import { JOIN_GROUP_ACTION, MESSAGE_RECEIVED } from "../../../constants/signalRActions";
 import { ChatMessage } from "../../../types/messages";
 import { ChatRouteParams } from "../../../types/Chats";
-import { SignalRAPIResponseMessage } from "../../../types/siglalRSubscriptions";
-import { handleMessageReceived } from "../../../utils/SignalRAaction/handleMessageReceived";
+import { useInView } from "react-intersection-observer";
+import { useAppDispatch } from "../../../hooks/useReduxHook";
 import useAPIMessagesHook from "../../../hooks/useAPIMessagesHook";
+import useSignalRAction from "../../../api/signalR/signalRActions";
+import { SignalRContext } from "../../../providers/SignalRContextProvider";
+import { SignalRAPIResponseMessage } from "../../../types/siglalRSubscriptions";
+import { changeActiveChatState } from "../../../store/activeChat/activeChatSlice";
+import { JOIN_GROUP_ACTION, MESSAGE_RECEIVED } from "../../../constants/signalRActions";
+import { handleMessageReceived } from "../../../utils/SignalRAaction/handleMessageReceived";
+import useGetInfiniteMessages from "../../../api/useGetInfiniteMessages.ts/useGetInfiniteMessages";
 
 interface Props {}
 
 const Converstation = ({}: Props) => {
+    const connection = SignalRContext;
     const params = useParams<ChatRouteParams>();
     const chatID = parseInt(params.chatID || "", 10);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const connection = SignalRContext;
+    const dispatch = useAppDispatch();
     const { updateMessages } = useAPIMessagesHook();
     const { handleSignalRAction } = useSignalRAction();
-    const { handleCurrActiveChatChange } = useAppContext();
 
     const handleMessageChange = (newMessage: ChatMessage): void => {
         setMessages((prevMessages) => [newMessage, ...prevMessages]);
@@ -40,11 +41,11 @@ const Converstation = ({}: Props) => {
     }, [inView, hasNextPage, fetchNextPage]);
 
     useEffect(() => {
-        handleCurrActiveChatChange(chatID);
+        dispatch(changeActiveChatState(chatID))
         handleSignalRAction(JOIN_GROUP_ACTION, chatID);
 
         return () => {
-            handleCurrActiveChatChange(null);
+            dispatch(changeActiveChatState(null))
         };
     }, [location.pathname]);
 

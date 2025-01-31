@@ -28,4 +28,3 @@ export type ChatParticipant = {
 export type ChatRouteParams = {
     chatID: string;
 };
-

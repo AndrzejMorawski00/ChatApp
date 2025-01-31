@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useFriendsActions } from "../../../api/friends/useFriendsActions";
-import { UserData } from "../../../types/Users";
-import { isValidChatForm } from "../../../utils/chatForm/isValidChatForm";
-import useSignalRAction from "../../../api/signalR/signalRActions";
 import { ChatData } from "../../../types/Chats";
-import { CREATE_NEW_CHAT_ACTION, EDIT_CHAT_ACTION } from "../../../constants/signalRActions";
+import { UserData } from "../../../types/Users";
 import ChatParticipantList from "./ChatParticipantList";
+import useSignalRAction from "../../../api/signalR/signalRActions";
+import { useGetFriendshipsQuery } from "../../../store/api/apiSlice";
+import { isValidChatForm } from "../../../utils/chatForm/isValidChatForm";
+import { CREATE_NEW_CHAT_ACTION, EDIT_CHAT_ACTION } from "../../../constants/signalRActions";
 
 interface Props {
     handleOpenChange: (newValue: boolean) => void;
@@ -16,7 +16,7 @@ const ChatForm = ({ handleOpenChange, currentChat }: Props) => {
     const [chatName, setChatName] = useState<string>("");
     const [searchFilter, setSearch] = useState<string>("");
     const [participants, setParticipants] = useState<number[]>([]);
-    const { friendshipData, isLoadingFriends, isErrorFriends } = useFriendsActions();
+    const { data: friendshipData, error: isErrorFriends, isLoading: isLoadingFriends } = useGetFriendshipsQuery();
     const { handleSignalRAction } = useSignalRAction();
 
     const handleParticipantsChange = (action: "add" | "remove", userID: number): void => {
@@ -63,7 +63,7 @@ const ChatForm = ({ handleOpenChange, currentChat }: Props) => {
         );
     }
 
-    if (isErrorFriends) {
+    if (isErrorFriends || !friendshipData) {
         return (
             <div className="flex items-center justify-center w-full h-full pt-4 pl-4 border-l-2 border-l-white/30">
                 <p className="mt-4 text-2xl text-red-600 font-montserrat animate-pulse">Error...</p>

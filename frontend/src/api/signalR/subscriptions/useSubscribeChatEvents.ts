@@ -1,29 +1,28 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { SignalRContext } from "../../../providers/SignalRContextProvider";
-import { ChatData, ChatRouteParams, APIChatResponse } from "../../../types/Chats";
 import { useNavigate, useParams } from "react-router";
-import { CHAT_DELETED, CHAT_EDITED, USER_ADDED, USER_REMOVED } from "../../../constants/signalRActions";
-import { handleMessageReceived } from "../../../utils/SignalRAaction/handleMessageReceived";
-import { SignalRAPIResponseMessage } from "../../../types/siglalRSubscriptions";
+import { apiSlice } from "../../../store/api/apiSlice";
+import { useAppDispatch } from "../../../hooks/useReduxHook";
 import useAPIMessagesHook from "../../../hooks/useAPIMessagesHook";
+import { SignalRContext } from "../../../providers/SignalRContextProvider";
+import { SignalRAPIResponseMessage } from "../../../types/siglalRSubscriptions";
+import { ChatData, ChatRouteParams, APIChatResponse } from "../../../types/Chats";
+import { handleMessageReceived } from "../../../utils/SignalRAaction/handleMessageReceived";
+import { CHAT_DELETED, CHAT_EDITED, USER_ADDED, USER_REMOVED } from "../../../constants/signalRActions";
 
 // Constants
-
 const HOME_ROUTE = "/home/";
 const BASE_10 = 10;
 
 const useSubscribeChatEvents = () => {
     const connection = SignalRContext;
-    const queryClient = useQueryClient();
+    const params = useParams<ChatRouteParams>();
     const { updateMessages } = useAPIMessagesHook();
 
-    const params = useParams<ChatRouteParams>();
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
     const currChatID = parseInt(params.chatID || "", BASE_10);
-    const chatsQueryKeys = ["userChats"];
 
     const updateUserChatList = (userChatList: ChatData[]): void => {
-        queryClient.setQueryData(chatsQueryKeys, () => userChatList);
+        dispatch(apiSlice.util.updateQueryData("getChats", undefined, () => userChatList));
     };
 
     const handleChatChange = (data: APIChatResponse): void => {

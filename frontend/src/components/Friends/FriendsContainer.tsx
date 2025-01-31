@@ -1,11 +1,11 @@
-import { useFriendsActions } from "../../api/friends/useFriendsActions";
 import { FRIEND_COLUMNS } from "../../constants/Friends";
+import { useGetFriendshipsQuery } from "../../store/api/apiSlice";
 import FriendList from "./FriendList";
 
 interface Props {}
 
 const FriendsContainer = ({}: Props) => {
-    const { friendshipData, isLoadingFriends, isErrorFriends } = useFriendsActions();
+    const {data : friendshipData, error : isErrorFriends, isLoading : isLoadingFriends} = useGetFriendshipsQuery();
 
     if (isLoadingFriends) {
         return (
@@ -15,7 +15,7 @@ const FriendsContainer = ({}: Props) => {
         );
     }
 
-    if (isErrorFriends) {
+    if (isErrorFriends || !friendshipData) {
         return (
             <div className="flex items-center justify-center w-full h-full pt-4 pl-4 border-l-2 border-l-white/30">
                 <p className="mt-4 text-2xl font-montserrat text-mainButtonBackground animate-pulse">Error...</p>

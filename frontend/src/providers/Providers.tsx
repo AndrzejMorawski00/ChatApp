@@ -1,17 +1,19 @@
 import QueryProvider from "./QueryProvider";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import AppContextProvider from "./AppContextProvider";
 import RoutingProvider from "./RoutingProvider";
 import MessageToastList from "../components/APIMessages/MessageToastList";
+import { Provider as StoreProvider } from "react-redux";
+
+import store from "../store/store";
 
 const Providers = () => {
     return (
         <QueryProvider>
-            <AppContextProvider>
+            <StoreProvider store={store}>
                 <RoutingProvider />
                 <MessageToastList />
                 <ReactQueryDevtools />
-            </AppContextProvider>
+            </StoreProvider>
         </QueryProvider>
     );
 };

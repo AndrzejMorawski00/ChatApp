@@ -1,16 +1,18 @@
 import { ApiStatusMessage, NewApiStatusMessage } from "../types/ApiMessages";
-import useAppContext from "./useAppContextHook";
+import { handleMessages } from "../store/messages/messagesSlice";
+import { useAppDispatch } from "./useReduxHook";
 
 const useAPIMessagesHook = () => {
-    const { handleMessagesChange } = useAppContext();
+    const dispatch = useAppDispatch();
 
     const updateMessages = (message: NewApiStatusMessage): void => {
+        const newMessageID = Date.now();
         const newMessage: ApiStatusMessage = {
-            id: Date.now(),
+            id: newMessageID,
             message: message.content,
             messageType: message.type,
         };
-        handleMessagesChange(newMessage);
+        dispatch(handleMessages(newMessage));
     };
 
     return { updateMessages };

@@ -1,7 +1,8 @@
-import { Link, useLocation } from "react-router";
-import useAppContext from "../../hooks/useAppContextHook";
-import ThemeSwitch from "../ThemeSwitch/ThemeSwitch";
 import HeaderLink from "./HeaderLink";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import { Link, useLocation } from "react-router";
+import ThemeSwitch from "../ThemeSwitch/ThemeSwitch";
 
 // Constants
 const LOGOUT_PATH = "logout/";
@@ -12,7 +13,7 @@ const MIN_PATH_SEGMENT = 3;
 const HOME_PATH_SEGMENT = "home";
 
 const Header = () => {
-    const { isAuthenticated } = useAppContext();
+    const {isAuthenticated} = useSelector((state : RootState) => state.auth)
     const location = useLocation();
     const pathSegments = location.pathname.split("/");
     const includeHomeLink = pathSegments.includes(HOME_PATH_SEGMENT) && pathSegments.length > MIN_PATH_SEGMENT;

@@ -2,17 +2,27 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
 
 import * as Switch from "@radix-ui/react-switch";
-import useAppContext from "../../hooks/useAppContextHook";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import { changeThemeState } from "../../store/theme/themeSlice";
+import { useAppDispatch } from "../../hooks/useReduxHook";
 
 const ThemeSwitch = () => {
-    const { theme, handleThemeChange } = useAppContext();
+    const theme = useSelector((state: RootState) => state.theme.theme);
+    const dispatch = useAppDispatch();
 
     const isDarkMode = theme === "dark";
 
     const toggleTheme = (): void => {
         const newTheme = isDarkMode ? "light" : "dark";
-        handleThemeChange(newTheme);
+        dispatch(changeThemeState(newTheme));
     };
+
+    useEffect(() => {
+        document.body.classList.add(theme);
+        return () => document.body.classList.remove(theme);
+    }, [theme]);
 
     return (
         <div className="flex items-center justify-end w-full pr-4 md:pr-5 xl:pr-6">

@@ -1,12 +1,14 @@
 import { Navigate } from "react-router";
 import { useEffect } from "react";
-import useAppContext from "../../hooks/useAppContextHook";
+import { changeAuthenticationState } from "../../store/auth/authSlice";
+import { useAppDispatch } from "../../hooks/useReduxHook";
+
 
 const Logout = () => {
-    const { handleAuthenticationStateChange } = useAppContext();
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
-        handleAuthenticationStateChange(false);
+        dispatch(changeAuthenticationState(false));
     }, []);
 
     localStorage.clear();

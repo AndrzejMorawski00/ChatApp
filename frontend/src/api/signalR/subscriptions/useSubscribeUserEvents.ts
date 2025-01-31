@@ -1,5 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
-import useAppContext from "../../../hooks/useAppContextHook";
 import { SignalRContext } from "../../../providers/SignalRContextProvider";
 import { FriendshipAPIResponse } from "../../../types/Friends";
 import { FriendshipRequestRecieved, SignalRAPIResponseMessage } from "../../../types/siglalRSubscriptions";
@@ -11,35 +9,38 @@ import {
 } from "../../../constants/signalRActions";
 import { UserData } from "../../../types/Users";
 import { NewApiStatusMessage } from "../../../types/ApiMessages";
+import { useSelector } from "react-redux";
 import { handleMessageReceived } from "../../../utils/SignalRAaction/handleMessageReceived";
 import useAPIMessagesHook from "../../../hooks/useAPIMessagesHook";
-
-
+import { RootState } from "../../../store/store";
+import { apiSlice } from "../../../store/api/apiSlice";
+import { useAppDispatch } from "../../../hooks/useReduxHook";
 
 // Constants
 const useSubscribeUsersEvents = () => {
     const connection = SignalRContext;
-    const queryClient = useQueryClient();
-    const { searchBarValue } = useAppContext();
+    const { searchBarValue } = useSelector((state: RootState) => state.searchBar);
     const { updateMessages } = useAPIMessagesHook();
-    const friendsQueryKeys = ["users", "friends"];
-    const usersQueryKeys = ["users", "potentialFirends", searchBarValue];
+    const dispatch = useAppDispatch();
+
 
     const updateFriendsData = (friendships: FriendshipAPIResponse): void => {
-        queryClient.setQueryData(friendsQueryKeys, () => friendships);
+        dispatch(apiSlice.util.updateQueryData("getFriendships", undefined, () => friendships))
     };
 
     const updateUsersData = (users: UserData[]): void => {
-        queryClient.setQueryData(usersQueryKeys, () => {
+        dispatch(apiSlice.util.updateQueryData("getUsers", {searchParams : searchBarValue}, () => {
             return users.filter(
                 (u) =>
-                    searchBarValue !== "" || u.firstName.includes(searchBarValue) || u.lastName.includes(searchBarValue)
-            );
-        });
+                    searchBarValue !== "" ||
+                    u.firstName.includes(searchBarValue) ||
+                    u.lastName.includes(searchBarValue)
+            )}
+        ))
     };
 
     const handleFriendshipEvent = (data: FriendshipRequestRecieved): void => {
-        const {users, friendships} = data
+        const { users, friendships } = data;
         updateUsersData(users);
         updateFriendsData(friendships);
     };
@@ -48,7 +49,6 @@ const useSubscribeUsersEvents = () => {
         connection.useSignalREffect(
             FRIENDSHIP_REQUEST_RECEIVED,
             (data: SignalRAPIResponseMessage<FriendshipRequestRecieved>) => {
-                console.log(data);
                 handleMessageReceived(data, handleFriendshipEvent, updateMessages);
             },
             []

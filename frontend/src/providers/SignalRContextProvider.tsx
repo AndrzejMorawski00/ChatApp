@@ -5,6 +5,8 @@ import { createSignalRContext } from "react-signalr/signalr";
 
 export const SignalRContext = createSignalRContext();
 
+const CHAT_HUB_ENDPOINT = "chatHub";
+
 interface Props {
     children: ReactNode;
 }
@@ -17,7 +19,7 @@ const SignalRContextProvider = ({ children }: Props) => {
             connectEnabled={!!token}
             accessTokenFactory={() => token}
             dependencies={[token]}
-            url={`${getBaseAPIUrl()}chatHub`}
+            url={`${getBaseAPIUrl()}${CHAT_HUB_ENDPOINT}`}
         >
             {children}
         </SignalRContext.Provider>

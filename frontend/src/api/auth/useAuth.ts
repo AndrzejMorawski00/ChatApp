@@ -1,9 +1,9 @@
 import { useLocation, useNavigate } from "react-router";
 import { useEffect } from "react";
-import { ACCESS_TOKEN } from "../../constants/auth";
-import { refreshToken } from "../../utils/auth/refreshToken";
-import useAppContext from "../../hooks/useAppContextHook";
-import { isValidJWTToken } from "../../utils/auth/isValidJWTToken";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import { authenticateUser } from "../../store/auth/authSlice";
+import { useAppDispatch } from "../../hooks/useReduxHook";
 
 // Constants
 const ROOT_PATH = "/";
@@ -14,29 +14,22 @@ const useAuth = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const redirectLink: string = location.pathname != ROOT_PATH ? location.pathname : DEFAULT_REDIRECT_LINK;
-    const { isAuthenticated, handleAuthenticationStateChange } = useAppContext();
+
+    const dispatch = useAppDispatch();
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
     useEffect(() => {
         const authenticate = async (): Promise<void> => {
-            const token = localStorage.getItem(ACCESS_TOKEN);
-            if (token && isValidJWTToken(token)) {
-                handleAuthenticationStateChange(true);
+            const result = await dispatch(authenticateUser());
+            if (result.payload) {
                 navigate(redirectLink);
-            } else {
-                const refreshed = await refreshToken();
-                if (!refreshed) {
-                    handleAuthenticationStateChange(false);
-                    localStorage.clear();
-                    if (location.pathname !== ROOT_PATH) {
-                        navigate(INVALID_AUTH_REDIRECT_LINK);
-                    }
-                } else {
-                    navigate(redirectLink);
-                }
+                return;
             }
+            localStorage.clear();
+            navigate(INVALID_AUTH_REDIRECT_LINK);
         };
         authenticate();
-    }, [navigate, isAuthenticated, handleAuthenticationStateChange]);
+    }, [navigate, isAuthenticated]);
 };
 
 export default useAuth;

@@ -1,19 +1,26 @@
 import { useEffect, useState } from "react";
-import useAppContext from "../../hooks/useAppContextHook";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRotateLeft } from "@fortawesome/free-solid-svg-icons";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import { changeSearchBarState } from "../../store/searchBar/searchBarSlice";
+import { useAppDispatch } from "../../hooks/useReduxHook";
+
+// Constants
+const UPDATE_SEARCHBAR_INTERVAL = 300;
 
 const UserSearchBar = () => {
     const [searchBarInput, setSeachBarInput] = useState<string>("");
 
-    const { searchBarValue, handleSearchBarValueStateChange } = useAppContext();
+    const dispatch = useAppDispatch();
+    const { searchBarValue } = useSelector((state: RootState) => state.searchBar);
 
     useEffect(() => {
         const handler = setTimeout(() => {
             if (searchBarInput !== searchBarValue) {
-                handleSearchBarValueStateChange(searchBarInput);
+                dispatch(changeSearchBarState(searchBarInput));
             }
-        }, 300);
+        }, UPDATE_SEARCHBAR_INTERVAL);
 
         return () => clearTimeout(handler);
     }, [searchBarInput]);
@@ -25,7 +32,6 @@ const UserSearchBar = () => {
 
     const handleButtonClick = () => {
         setSeachBarInput("");
-        handleSearchBarValueStateChange("");
     };
 
     return (
