@@ -5,12 +5,10 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ChatApp.Hubs;
 using Infrastructure.DBContext;
-using Domain.Handlers.APIHandlers;
 using Domain;
-using Domain.UseCases.Common;
-using Domain.Models.HubModels;
-using Domain.UseCases.HubUseCases;
 using Domain.Handlers.HubHandlers;
+using DotNetEnv;
+
 namespace ChatApp
 {
     public class Program
@@ -19,7 +17,27 @@ namespace ChatApp
         {
             var builder = WebApplication.CreateBuilder(args);
             var config = builder.Configuration;
-            builder.Configuration.AddJsonFile("appsettings.json");
+            Env.TraversePath().Load();
+            builder.Configuration.AddEnvironmentVariables();
+
+            //Database
+           var dbHost = Environment.GetEnvironmentVariable("DATABASE_HOST") ?? throw new Exception("DATABASE_HOST is missing");
+            var dbPort = Environment.GetEnvironmentVariable("DATABASE_PORT") ?? throw new Exception("DATABASE_PORT is missing");
+            var dbName = Environment.GetEnvironmentVariable("DATABASE_NAME") ?? throw new Exception("DATABASE_NAME is missing");
+            var dbUser = Environment.GetEnvironmentVariable("DATABASE_USERNAME") ?? throw new Exception("DATABASE_USERNAME is missing");
+            var dbPassword = Environment.GetEnvironmentVariable("DATABASE_PASSWORD") ?? throw new Exception("DATABASE_PASSWORD is missing");
+            var migrateStr = Environment.GetEnvironmentVariable("MIGRATE") ?? throw new Exception("MIGRATE is missing");
+            if (!bool.TryParse(migrateStr, out var migrate))
+            {
+                throw new Exception("MIGRATE is not a valid boolean");
+            }
+            var dbConnection = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPassword}";
+
+            // Allowed Hosts
+            var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? throw new Exception("FRONTEND_URL is missing");
+
+            // JWT Secret Key
+            var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? throw new Exception("JWT_SECRET is missing");
 
             // Add services to the container.
             builder.Services.AddSignalR();
@@ -27,7 +45,7 @@ namespace ChatApp
             builder.Services.AddControllersWithViews();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddDbContext<AppDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddDbContext<AppDBContext>(options => options.UseNpgsql(dbConnection));
             builder.Services.AddScoped<AppDBContext>();
             builder.Services.AddSingleton<JwtHandler>();
             builder.Services.AddEndpointsApiExplorer();
@@ -37,7 +55,7 @@ namespace ChatApp
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173")
+                    policy.WithOrigins(frontendUrl)
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials();
@@ -54,9 +72,7 @@ namespace ChatApp
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(cfg =>
                 {
-                    var securityKey = config["Jwt:secretKey"];
-
-                    var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(securityKey!));
+                    var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey!));
                     var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256Signature);
 
                     cfg.RequireHttpsMetadata = false;
@@ -82,10 +98,9 @@ namespace ChatApp
                         OnMessageReceived = context =>
                         {
                             var accessToken = context.Request.Query["access_token"];
-
                             var path = context.HttpContext.Request.Path;
                             if (!string.IsNullOrEmpty(accessToken) &&
-                                (path.StartsWithSegments("/chatHub")))
+                                path.StartsWithSegments("/chatHub"))
                             {
                                 context.Token = accessToken;
                             }
@@ -97,11 +112,27 @@ namespace ChatApp
 
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())
-            {
+            // Don't use in production
+            // if (app.Environment.IsDevelopment())
+            // {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+            // }
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDBContext>();
+                if (migrate)
+                {
+                    Console.WriteLine("Applying migrations...");
+                    dbContext.Database.Migrate();
+                }
+                else
+                {
+                    Console.WriteLine("Migrations are skipped.");
+                }
             }
+
 
             app.UseDeveloperExceptionPage();
             app.UseCors("AllowFrontend");

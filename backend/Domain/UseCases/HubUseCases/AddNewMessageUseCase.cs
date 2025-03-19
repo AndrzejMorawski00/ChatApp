@@ -42,7 +42,7 @@ namespace Domain.UseCases.HubUseCases
                 ChatID = chat.ID,
                 Sender = request.User,
                 SenderID = request.User.ID,
-                SentTime = DateTime.Now,
+                SentTime = DateTime.UtcNow,
                 Content = request.model.Content,
             };
             var groupName = $"{chat.ChatName}_{chat.ID}";

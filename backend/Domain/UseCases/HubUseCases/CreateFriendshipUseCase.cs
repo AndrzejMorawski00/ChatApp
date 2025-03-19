@@ -2,11 +2,7 @@
 using Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Domain.UseCases.HubUseCases
 {
@@ -45,12 +41,10 @@ namespace Domain.UseCases.HubUseCases
 
             var friendshipExists = await _dbContext.Friends
                 .FirstOrDefaultAsync(f => f.SenderID == user.ID && f.ReceiverID == friend.ID || f.SenderID == friend.ID && f.ReceiverID == user.ID);
-
             if (friendshipExists != null)
             {
                 throw new Exception(FriendshipExistsError);
             }
-
             var newFriendship = new Friend
             {   
                 Sender = user,
@@ -62,7 +56,6 @@ namespace Domain.UseCases.HubUseCases
 
             await _dbContext.AddAsync(newFriendship);
             await _dbContext.SaveChangesAsync();
-
             return new CreateFriendshipUseCaseResults 
             { 
                 NewFriendship = newFriendship, 

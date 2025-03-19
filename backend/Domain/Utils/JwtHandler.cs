@@ -10,7 +10,7 @@ namespace Domain
     public class JwtHandler
     {
         private readonly IConfiguration _config;
-        private const string JWTSecretKey = "Jwt:secretKey";
+        private const string JWTSecretKey = "JWT_SECRET";
 
         public JwtHandler(IConfiguration configuration)
         {
@@ -22,17 +22,14 @@ namespace Domain
             var securityKey = _config[JWTSecretKey]!;
             var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(securityKey));
             var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256Signature);
-
             var claims = new[] {
                 new Claim(ClaimTypes.Email, user.Email.ToString()),
             };
-
             var token = new JwtSecurityToken(
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(expiresInMinutes),
                 signingCredentials: signingCredentials
             );
-
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
@@ -40,7 +37,6 @@ namespace Domain
         {
             var securityKey = _config[JWTSecretKey]!;
             var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(securityKey));
-
             var tokenHandler = new JwtSecurityTokenHandler();
             try
             {

@@ -1,5 +1,4 @@
-﻿using ChatAppASPNET;
-using Domain.Models.APIModels;
+﻿using Domain.Models.APIModels;
 using Entities;
 using Infrastructure.DBContext;
 using MediatR;
@@ -51,7 +50,7 @@ namespace Domain.UseCases.APIUseCases
             {
                 throw new Exception(InvalidCredentialsErrorMessage);
             }
-
+            
             return new AuthenticateUserResults() { User = user };
         }
     }

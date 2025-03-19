@@ -47,7 +47,7 @@ namespace ChatApp.Controllers.API
             catch (Exception ex)
             {
                 var errorMessage = ex.Message ?? GenericErrorMessage;
-                return BadRequest(ex.Message);
+                return BadRequest(errorMessage);
             }
         }
     }

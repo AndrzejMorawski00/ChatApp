@@ -35,7 +35,6 @@ namespace Domain.UseCases.HubUseCases
         public async Task<AuthenticateHubResults> Handle(AuthenticateHubParameters request, CancellationToken cancellationToken)
         {
             var userEmail = request.Context.User?.FindFirst(ClaimTypes.Email)?.Value;
-
             if (string.IsNullOrEmpty(userEmail))
             {
                 throw new ArgumentNullException(UserEmailEmptyError);
