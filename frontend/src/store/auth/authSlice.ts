@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ACCESS_TOKEN } from "../../constants/auth";
-import { isValidJWTToken } from "../../utils/auth/isValidJWTToken";
-import { refreshToken } from "../../utils/auth/refreshToken";
+import { isValidJWTToken } from "../../utils/Auth/isValidJwtToken"
+import { refreshToken } from "../../utils/Auth/refreshToken";
 
 
 export const authenticateUser = createAsyncThunk(

@@ -1,0 +1,9 @@
+# frontend
+node_modules
+Dockerfile.frontend
+docker-compose.yml
+dist
+.github
+.git
+.gitignore
+.env.template

@@ -1,11 +1,11 @@
 import { useState } from "react";
 
 import { isValidKeyValue } from "../../utils/common";
-import { isValidLoginForm } from "../../utils/auth/isValidAuthForm";
 import { Link } from "react-router";
 import { LoginFormType } from "../../types/auth";
 import useLoginUser from "../../api/auth/useLoginUser";
 import Header from "../../components/Header/Header";
+import { isValidLoginForm } from "../../utils/Auth/isValidAuthForm";
 
 // Constants
 const INITIAL_LOGIN_FORM: LoginFormType = {

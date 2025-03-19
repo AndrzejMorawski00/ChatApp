@@ -1,6 +1,6 @@
 import axios from "axios";
 import { ACCESS_TOKEN } from "../../constants/auth";
-import { refreshToken } from "../auth/refreshToken";
+import { refreshToken } from "../Auth/refreshToken";
 
 // Constants
 const DEVELOPMENT_MODE = "development";

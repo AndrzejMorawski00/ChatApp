@@ -2,13 +2,13 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 import MainLink from "../../components/Main/MainLink";
 import { useEffect } from "react";
 import { ACCESS_TOKEN } from "../../constants/auth";
-import { refreshToken } from "../../utils/auth/refreshToken";
-import { isValidJWTToken } from "../../utils/auth/isValidJWTToken";
 import Header from "../../components/Header/Header";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { changeAuthenticationState } from "../../store/auth/authSlice";
 import { useAppDispatch } from "../../hooks/useReduxHook";
+import { isValidJWTToken } from "../../utils/Auth/isValidJwtToken";
+import { refreshToken } from "../../utils/Auth/refreshToken";
 
 // Constants
 const ROOT_PATH = "/";

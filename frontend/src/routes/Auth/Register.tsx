@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { RegisterFormType } from "../../types/auth";
 import { isValidKeyValue } from "../../utils/common";
-import { isValidRegisterForm } from "../../utils/auth/isValidAuthForm";
+import { isValidRegisterForm } from "../../utils/Auth/isValidAuthForm";
 import { Link } from "react-router";
 import useRegisterUser from "../../api/auth/useRegisterUser";
 import Header from "../../components/Header/Header";
